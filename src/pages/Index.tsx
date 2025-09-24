@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 const Index = () => {
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 p-4 space-y-8">
         {/* Welcome Section */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-primary p-8 text-primary-foreground shadow-elegant">
           <div className="absolute inset-0 bg-black/10" />
@@ -48,7 +48,7 @@ const Index = () => {
                 <FileText className="h-4 w-4 mr-2" />
                 Assign New Task
               </Button>
-              <Button variant="outline" size="lg" className="border-white/30 text-primary-foreground hover:bg-white/10">
+              <Button variant="outline" size="lg" className="border-white/30 text-primary hover:bg-white/10">
                 <Calendar className="h-4 w-4 mr-2" />
                 Schedule Meeting
               </Button>
@@ -60,9 +60,9 @@ const Index = () => {
         <DashboardStats />
 
         {/* Main Dashboard Grid */}
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-2">
           {/* Left Column - Cases */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="col-span-2 space-y-6">
             <ActiveCases />
             
             {/* Quick Insights */}
@@ -118,7 +118,7 @@ const Index = () => {
           </div>
 
           {/* Right Column - Paralegal Status */}
-          <div className="space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             <ParalegalStatus />
           </div>
         </div>

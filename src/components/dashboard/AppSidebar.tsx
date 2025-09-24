@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { 
-  LayoutDashboard, 
-  Briefcase, 
-  GraduationCap, 
-  Package, 
-  Shield, 
-  CreditCard, 
-  Settings, 
-  Plus,
-  Search,
-  Bell,
-  Users,
-  FileText,
-  Calendar,
-  TrendingUp
+  LayoutDashboard, Briefcase, GraduationCap, Package, Shield, CreditCard, 
+  Settings, Plus, Search, Bell, Users, Calendar
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -35,42 +23,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
-  { 
-    title: "Dashboard", 
-    url: "/", 
-    icon: LayoutDashboard,
-    badge: null
-  },
-  { 
-    title: "Cases", 
-    url: "/cases", 
-    icon: Briefcase,
-    badge: "12"
-  },
-  { 
-    title: "Paralegal Training", 
-    url: "/training", 
-    icon: GraduationCap,
-    badge: "3"
-  },
-  { 
-    title: "Service Bundles", 
-    url: "/services", 
-    icon: Package,
-    badge: null
-  },
-  { 
-    title: "Compliance & Reports", 
-    url: "/compliance", 
-    icon: Shield,
-    badge: "2"
-  },
-  { 
-    title: "Billing", 
-    url: "/billing", 
-    icon: CreditCard,
-    badge: null
-  },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, badge: null },
+  { title: "Cases", url: "/cases", icon: Briefcase, badge: "12" },
+  { title: "Paralegal Training", url: "/training", icon: GraduationCap, badge: "3" },
+  { title: "Service Bundles", url: "/services", icon: Package, badge: null },
+  { title: "Compliance & Reports", url: "/compliance", icon: Shield, badge: "2" },
+  { title: "Billing", url: "/billing", icon: CreditCard, badge: null },
 ];
 
 const quickActions = [
@@ -86,54 +44,50 @@ export function AppSidebar() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (path: string) => {
-    if (path === "/" && currentPath === "/") return true;
-    if (path !== "/" && currentPath.startsWith(path)) return true;
-    return false;
+    return path === "/" ? currentPath === "/" : currentPath.startsWith(path);
   };
 
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar 
+    <Sidebar
       className={cn(
-        "border-r bg-gradient-card shadow-elegant transition-all duration-300",
-        isCollapsed ? "w-16" : "w-72"
+        "flex flex-col border-r bg-white shadow-lg transition-all duration-300",
+        isCollapsed ? "w-20 max-w-[80px]" : "w-72 max-w-[288px]"
       )}
       collapsible="icon"
     >
-      <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow">
-            <span className="text-primary-foreground font-bold text-sm">J</span>
-          </div>
-          {!isCollapsed && (
-            <div className="animate-fade-in">
-              <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
-                JurisLPO
-              </h1>
-              <p className="text-xs text-muted-foreground">Legal Dashboard</p>
-            </div>
-          )}
+      {/* Sidebar Header */}
+      <SidebarHeader className="border-b p-4 flex items-start justify-start gap-3">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-300 to-blue-700 flex items-center justify-center text-white font-bold text-lg">
+          J
         </div>
+        {!isCollapsed && (
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold text-gray-800">JurisLPO</h1>
+            <span className="text-sm text-gray-500">Legal Dashboard</span>
+          </div>
+        )}
       </SidebarHeader>
 
-      <SidebarContent className="p-4">
+      {/* Sidebar Content */}
+      <SidebarContent className="flex-1 p-2 overflow-y-auto">
         {!isCollapsed && (
-          <div className="mb-6 animate-fade-in">
+          <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-background/50 border-border/50 focus:bg-background transition-colors"
+                className="pl-10 pr-3 py-2 rounded-md border border-gray-200 bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
         )}
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -144,23 +98,21 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
+                        "flex items-center gap-3 px-3 py-6 rounded-lg transition-all duration-200",
+                        isCollapsed ? "justify-center" : "justify-start",
                         isActive(item.url)
-                          ? "bg-primary text-primary-foreground shadow-card"
-                          : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                          ? "bg-blue-100 text-blue-600"
+                          : "text-gray-700 hover:bg-gray-100"
                       )}
                     >
-                      <item.icon className={cn(
-                        "h-5 w-5 transition-transform group-hover:scale-110",
-                        isActive(item.url) ? "text-primary-foreground" : "text-muted-foreground"
-                      )} />
+                      <item.icon className={cn("w-5 h-5", isActive(item.url) ? "text-blue-600" : "text-gray-400")} />
                       {!isCollapsed && (
                         <>
                           <span className="flex-1">{item.title}</span>
                           {item.badge && (
-                            <Badge 
+                            <Badge
                               variant={isActive(item.url) ? "secondary" : "outline"}
-                              className="h-5 text-xs animate-pulse-glow"
+                              className="h-5 text-xs"
                             >
                               {item.badge}
                             </Badge>
@@ -176,20 +128,20 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {!isCollapsed && (
-          <SidebarGroup className="mt-8">
-            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <SidebarGroup className="mt-6">
+            <SidebarGroupLabel className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               Quick Actions
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="space-y-2 animate-fade-in">
+              <div className="flex flex-col gap-2">
                 {quickActions.map((action) => (
                   <Button
                     key={action.title}
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start gap-3 h-9 hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-[1.02]"
+                    className="flex items-center gap-2 justify-start px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                   >
-                    <action.icon className="h-4 w-4" />
+                    <action.icon className="w-4 h-4" />
                     {action.title}
                   </Button>
                 ))}
@@ -199,36 +151,34 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
+      {/* Sidebar Footer */}
+      <SidebarFooter className="border-t p-3 mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <NavLink
                 to="/settings"
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group",
-                  isActive("/settings")
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 transition-all duration-200",
+                  isCollapsed ? "justify-center" : "justify-start",
+                  isActive("/settings") ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
                 )}
               >
-                <Settings className="h-5 w-5 transition-transform group-hover:rotate-90" />
+                <Settings className="w-5 h-5" />
                 {!isCollapsed && <span>Settings</span>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        
+
         {!isCollapsed && (
-          <div className="mt-4 p-3 bg-gradient-primary rounded-lg text-primary-foreground animate-fade-in">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Bell className="h-4 w-4" />
-              </div>
-              <div className="text-xs">
-                <p className="font-medium">3 New Notifications</p>
-                <p className="opacity-90">Review pending drafts</p>
-              </div>
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-blue-600 flex items-center gap-2">
+            <div className="w-8 h-8 flex items-center justify-center bg-blue-200 rounded-full">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div className="text-sm">
+              <p className="font-semibold">3 New Notifications</p>
+              <p className="text-gray-500">Review pending drafts</p>
             </div>
           </div>
         )}

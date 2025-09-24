@@ -107,7 +107,7 @@ function ParalegalCard({ paralegal }: ParalegalCardProps) {
         )}
 
         {/* Performance Metrics */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
@@ -130,7 +130,7 @@ function ParalegalCard({ paralegal }: ParalegalCardProps) {
                   className={cn(
                     "h-3 w-3",
                     i < Math.floor(paralegal.rating) 
-                      ? "text-warning fill-current" 
+                      ? "text-yellow-400 fill-yellow-400" 
                       : "text-muted-foreground/30"
                   )} 
                 />
@@ -164,7 +164,7 @@ function ParalegalCard({ paralegal }: ParalegalCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button size="sm" className="flex-1">
             <MessageSquare className="h-4 w-4 mr-2" />
             Message
@@ -183,6 +183,7 @@ const mockParalegals = [
   {
     id: "1",
     name: "Sarah Chen",
+    avatar: "/avatars/01.png",
     specialization: "Personal Injury & Litigation",
     status: "online" as const,
     currentAssignment: "Johnson v. Tech Corp Discovery",
@@ -197,6 +198,7 @@ const mockParalegals = [
   {
     id: "2",
     name: "David Kumar",
+    avatar: "/avatars/02.png",
     specialization: "Estate Planning & Probate",
     status: "busy" as const,
     currentAssignment: "Williams Trust Documentation",
@@ -211,6 +213,7 @@ const mockParalegals = [
   {
     id: "3",
     name: "Lisa Rodriguez",
+    avatar: "/avatars/03.png",
     specialization: "Real Estate & Commercial Law",
     status: "online" as const,
     currentAssignment: "Metro Properties Due Diligence",
@@ -225,6 +228,7 @@ const mockParalegals = [
   {
     id: "4",
     name: "Raj Patel",
+    avatar: "/avatars/04.png",
     specialization: "Corporate & IP Law",
     status: "training" as const,
     hoursToday: 4.0,
@@ -244,7 +248,7 @@ export function ParalegalStatus() {
   return (
     <Card className="bg-gradient-card shadow-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <CardTitle className="text-xl font-bold text-foreground">Paralegal Team</CardTitle>
             <div className="flex items-center gap-2 mt-1">
@@ -260,18 +264,19 @@ export function ParalegalStatus() {
           
           <Button variant="outline">
             <Calendar className="h-4 w-4 mr-2" />
-            Schedule Meeting
+            Schedule
           </Button>
         </div>
       </CardHeader>
 
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+        {/* --- MODIFIED FOR RESPONSIVENESS --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {mockParalegals.map((paralegal, index) => (
             <div
               key={paralegal.id}
               className="animate-fade-in"
-              style={{ animationDelay: `${index * 150}ms` }}
+              style={{ animationDelay: `${index * 150}ms`, animationFillMode: "both" }}
             >
               <ParalegalCard paralegal={paralegal} />
             </div>

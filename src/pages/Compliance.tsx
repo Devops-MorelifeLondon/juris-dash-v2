@@ -56,7 +56,7 @@ const reports = [
 export default function Compliance() {
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 p-4 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
