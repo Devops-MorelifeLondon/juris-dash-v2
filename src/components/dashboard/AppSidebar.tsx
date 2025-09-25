@@ -26,6 +26,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, badge: null },
   { title: "Cases", url: "/cases", icon: Briefcase, badge: "12" },
   { title: "Paralegal Training", url: "/training", icon: GraduationCap, badge: "3" },
+  { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap, badge: "3" },
   { title: "Service Bundles", url: "/services", icon: Package, badge: null },
   { title: "Compliance & Reports", url: "/compliance", icon: Shield, badge: "2" },
   { title: "Billing", url: "/billing", icon: CreditCard, badge: null },
