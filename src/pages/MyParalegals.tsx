@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Users,
   Briefcase,
@@ -35,6 +36,9 @@ import {
   Search,
   X,
   PlusCircle,
+  MessageSquare,
+  Award,
+  Send,
 } from "lucide-react";
 
 // --- MOCK DATA ---
@@ -44,6 +48,7 @@ const initialAssignedParalegals = [
     name: "Alice Johnson",
     avatar: "/avatars/01.png",
     expertise: ["Litigation", "Family Law"],
+    training: ["Federal Litigation", "NY State Law", "Bluebook Citation"],
     tasks: [
       {
         id: "task-101",
@@ -51,6 +56,10 @@ const initialAssignedParalegals = [
         description: "Review and summarize the latest discovery documents for case #124. Focus on key evidence and potential motions.",
         progress: 80,
         priority: "High",
+        comments: [
+            { id: 1, author: "John Doe (Attorney)", avatar: "/avatars/attorney.png", text: "Great progress, Alice. Please also cross-reference with the plaintiff's latest deposition." },
+            { id: 2, author: "Alice Johnson", avatar: "/avatars/01.png", text: "Will do, John. I'll have the updated summary by EOD." },
+        ]
       },
       {
         id: "task-102",
@@ -58,16 +67,17 @@ const initialAssignedParalegals = [
         description: "Analyze all client communications related to the Smith v. Jones case and flag for attorney review.",
         progress: 45,
         priority: "Medium",
+        comments: []
       },
     ],
   },
 ];
 
 const initialAvailableParalegals = [
-  { id: 3, name: "Brenda Smith", avatar: "/avatars/03.png", expertise: ["Corporate", "M&A"], availability: "Available" },
-  { id: 4, name: "David Rodriguez", avatar: "/avatars/04.png", expertise: ["Litigation", "Personal Injury"], availability: "Available" },
-  { id: 5, name: "Emily White", avatar: "/avatars/05.png", expertise: ["Real Estate", "Contracts"], availability: "Partially Available" },
-  { id: 6, name: "Charles Brown", avatar: "/avatars/06.png", expertise: ["Family Law"], availability: "Available" },
+  { id: 3, name: "Brenda Smith", avatar: "/avatars/03.png", expertise: ["Corporate", "M&A"], training: ["SEC Filings", "Due Diligence"], availability: "Available" },
+  { id: 4, name: "David Rodriguez", avatar: "/avatars/04.png", expertise: ["Litigation", "Personal Injury"], training: ["Federal Litigation", "Medical Record Analysis"], availability: "Available" },
+  { id: 5, name: "Emily White", avatar: "/avatars/05.png", expertise: ["Real Estate", "Contracts"], training: ["Title Searches", "Contract Law"], availability: "Partially Available" },
+  { id: 6, name: "Charles Brown", avatar: "/avatars/06.png", expertise: ["Family Law"], training: ["NY State Law", "Mediation"], availability: "Available" },
 ];
 
 const allDomains = ["All", "Litigation", "Real Estate", "Corporate", "Family Law", "Personal Injury", "M&A", "Contracts"];
@@ -83,23 +93,25 @@ export default function ParalegalDashboard() {
   const [selectedParalegal, setSelectedParalegal] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTask, setNewTask] = useState({ title: "", description: "", priority: "Medium" });
+  const [newComment, setNewComment] = useState("");
+
 
   const openAssignModal = (paralegal) => {
     setSelectedParalegal(paralegal);
     setIsAssignModalOpen(true);
   };
 
-  const openDetailsModal = (task) => {
-    setSelectedTask(task);
+  const openDetailsModal = (task, paralegal) => {
+    setSelectedTask({ ...task, paralegalId: paralegal.id });
     setIsDetailsModalOpen(true);
   };
-
+  
   const handleAssignTask = () => {
     if (!newTask.title || !selectedParalegal) return;
 
     const newAssignedParalegal = {
       ...selectedParalegal,
-      tasks: [{ ...newTask, progress: 0, id: `task-${Date.now()}` }],
+      tasks: [{ ...newTask, progress: 0, id: `task-${Date.now()}`, comments: [] }],
     };
 
     setAssignedParalegals([...assignedParalegals, newAssignedParalegal]);
@@ -109,6 +121,40 @@ export default function ParalegalDashboard() {
     setIsAssignModalOpen(false);
     setNewTask({ title: "", description: "", priority: "Medium" });
     setSelectedParalegal(null);
+  };
+
+  const handlePostComment = () => {
+    if (!newComment.trim() || !selectedTask) return;
+
+    const newCommentObj = {
+        id: Date.now(),
+        author: "You (Attorney)", // Placeholder for current user
+        avatar: "/avatars/attorney.png",
+        text: newComment,
+    };
+    
+    const updatedAssignedParalegals = assignedParalegals.map(p => {
+        if (p.id === selectedTask.paralegalId) {
+            const updatedTasks = p.tasks.map(t => {
+                if (t.id === selectedTask.id) {
+                    return { ...t, comments: [...t.comments, newCommentObj] };
+                }
+                return t;
+            });
+            return { ...p, tasks: updatedTasks };
+        }
+        return p;
+    });
+
+    setAssignedParalegals(updatedAssignedParalegals);
+
+    // Also update the selectedTask state to reflect the change immediately in the modal
+    setSelectedTask(prev => ({
+        ...prev,
+        comments: [...prev.comments, newCommentObj]
+    }));
+
+    setNewComment("");
   };
 
   const filteredAvailable = availableParalegals
@@ -130,12 +176,20 @@ export default function ParalegalDashboard() {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {assignedParalegals.map((p) => (
                   <Card key={p.id} className="bg-white border shadow-sm">
-                    <CardHeader className="flex flex-row items-center gap-4">
+                    <CardHeader className="flex flex-row items-start gap-4">
                       <Avatar className="h-12 w-12"><AvatarImage src={p.avatar} alt={p.name} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-lg text-blue-900">{p.name}</CardTitle>
                         <div className="flex flex-wrap gap-1 pt-2">
                           {p.expertise.map(d => <Badge key={d} variant="outline" className="text-blue-700 bg-blue-50 border-blue-200">{d}</Badge>)}
+                        </div>
+                         <div className="mt-3">
+                            <h4 className="font-semibold text-xs text-gray-400 uppercase tracking-wider mb-2 flex items-center">
+                                <Award className="w-3.5 h-3.5 mr-1.5" /> Trained In
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                                {p.training.map(t => <Badge key={t} className="bg-gray-100 text-gray-700 font-normal">{t}</Badge>)}
+                            </div>
                         </div>
                       </div>
                     </CardHeader>
@@ -144,9 +198,12 @@ export default function ParalegalDashboard() {
                       <div className="space-y-3">
                         {p.tasks.map((task) => (
                           <div key={task.id} className="group">
-                            <button onClick={() => openDetailsModal(task)} className="w-full text-left">
+                            <button onClick={() => openDetailsModal(task, p)} className="w-full text-left p-2 rounded-md hover:bg-gray-50 transition-colors">
                               <div className="flex justify-between items-center mb-1">
-                                <p className="text-sm font-medium text-gray-800 group-hover:text-blue-600 transition-colors">{task.title}</p>
+                                <p className="flex items-center text-sm font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
+                                  <MessageSquare className="w-4 h-4 mr-2 text-gray-400 group-hover:text-blue-500" />
+                                  {task.title}
+                                </p>
                                 <span className="text-sm font-bold text-blue-700">{task.progress}%</span>
                               </div>
                               <Progress value={task.progress} className="w-full h-1.5" />
@@ -191,14 +248,20 @@ export default function ParalegalDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredAvailable.map((p) => (
                 <Card key={p.id} className="bg-white border flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="flex-row items-center gap-4 space-y-0 pb-3">
-                    <Avatar className="h-10 w-10"><AvatarImage src={p.avatar} alt={p.name} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
-                    <CardTitle className="text-base text-gray-800">{p.name}</CardTitle>
+                  <CardHeader>
+                     <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10"><AvatarImage src={p.avatar} alt={p.name} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
+                        <CardTitle className="text-base text-gray-800">{p.name}</CardTitle>
+                    </div>
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <div className="mb-3">
                       <h4 className="font-semibold text-xs text-gray-400 uppercase tracking-wider mb-2">Expertise</h4>
                       <div className="flex flex-wrap gap-1.5">{p.expertise.map(d => <Badge key={d} className="bg-gray-100 text-gray-700 font-normal">{d}</Badge>)}</div>
+                    </div>
+                     <div className="mb-4">
+                        <h4 className="font-semibold text-xs text-gray-400 uppercase tracking-wider mb-2 flex items-center"><Award className="w-3.5 h-3.5 mr-1.5" /> Trained In</h4>
+                        <div className="flex flex-wrap gap-1.5">{p.training.map(t => <Badge key={t} className="bg-gray-100 text-gray-700 font-normal">{t}</Badge>)}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`h-2 w-2 rounded-full ${p.availability === 'Available' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
@@ -229,7 +292,7 @@ export default function ParalegalDashboard() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="task-desc" className="text-right">Description</Label>
-              <Input id="task-desc" value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} className="col-span-3" />
+               <Textarea id="task-desc" value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="task-priority" className="text-right">Priority</Label>
@@ -250,9 +313,9 @@ export default function ParalegalDashboard() {
         </DialogContent>
       </Dialog>
       
-      {/* --- MODAL: TASK DETAILS --- */}
+      {/* --- MODAL: TASK DETAILS & CHAT --- */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                   <DialogTitle>{selectedTask?.title}</DialogTitle>
                   <DialogDescription>
@@ -270,6 +333,41 @@ export default function ParalegalDashboard() {
                       <div className="flex items-center gap-3">
                           <Progress value={selectedTask?.progress} className="w-full" />
                           <span className="font-bold text-blue-700">{selectedTask?.progress}%</span>
+                      </div>
+                  </div>
+                  
+                  {/* --- BUILT-IN CHAT & MESSAGING --- */}
+                  <div className="pt-4 border-t">
+                      <h4 className="font-semibold text-gray-700 mb-3 text-sm flex items-center">
+                          <MessageSquare className="w-4 h-4 mr-2" /> Task Discussion
+                      </h4>
+                      <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
+                        {selectedTask?.comments.map(comment => (
+                            <div key={comment.id} className="flex items-start gap-3">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={comment.avatar} alt={comment.author} />
+                                    <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="bg-gray-100 rounded-lg px-3 py-2 flex-1">
+                                    <p className="font-semibold text-xs text-gray-800">{comment.author}</p>
+                                    <p className="text-gray-600">{comment.text}</p>
+                                </div>
+                            </div>
+                        ))}
+                         {selectedTask?.comments.length === 0 && (
+                            <p className="text-center text-xs text-gray-400 py-4">No comments yet. Start the conversation!</p>
+                        )}
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                          <Input 
+                            placeholder="Type your message..." 
+                            value={newComment}
+                            onChange={e => setNewComment(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handlePostComment()}
+                          />
+                          <Button size="icon" onClick={handlePostComment} disabled={!newComment.trim()}>
+                            <Send className="w-4 h-4"/>
+                          </Button>
                       </div>
                   </div>
               </div>

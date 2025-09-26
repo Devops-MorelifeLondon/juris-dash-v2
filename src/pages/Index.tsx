@@ -1,5 +1,5 @@
 import { Layout } from "@/components/ui/layout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
+
 import { ActiveCases } from "@/components/dashboard/ActiveCases";
 import { ParalegalStatus } from "@/components/dashboard/ParalegalStatus";
 import { Calendar, Clock, FileText, TrendingUp, Users, Zap } from "lucide-react";
@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { LegalDashboard } from "@/components/dashboard/DashboardStats";
+
 
 const Index = () => {
   return (
@@ -57,7 +59,7 @@ const Index = () => {
         </div>
 
         {/* Key Statistics */}
-        <DashboardStats />
+        <LegalDashboard />
 
         {/* Main Dashboard Grid */}
         <div className="grid gap-8 lg:grid-cols-2">
