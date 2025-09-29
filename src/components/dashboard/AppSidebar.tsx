@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   LayoutDashboard, Briefcase, GraduationCap, Package, Shield, CreditCard, 
-  Settings, Plus, Search, Bell, Users, Calendar
+  Settings, Plus, Search, Bell, Users, Calendar, User2
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -30,6 +30,7 @@ const navigationItems = [
   { title: "Service Bundles", url: "/services", icon: Package, badge: null },
   { title: "Compliance & Reports", url: "/compliance", icon: Shield, badge: "2" },
   { title: "Billing", url: "/billing", icon: CreditCard, badge: null },
+  { title: "Profile", url: "/profile", icon: User2, badge: null },
 ];
 
 const quickActions = [
