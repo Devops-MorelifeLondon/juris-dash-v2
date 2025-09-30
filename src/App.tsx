@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import TrainYourResource from "./pages/Training";
 import ParalegalDashboard from "./pages/MyParalegals";
 import ProfilePage from "./pages/Profile";
+import AuthPage from "./pages/AuthPage";
+
 
 
 
@@ -35,6 +37,7 @@ const App = () => (
           <Route path="/billing" element={<Billing />} />
           <Route path="/myparalegals" element={<ParalegalDashboard />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/auth" element={<AuthPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
