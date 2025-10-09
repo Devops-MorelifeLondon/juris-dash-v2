@@ -1,6 +1,7 @@
 export interface Case {
   id: string;
   name: string;
+  casenumber: string;
   client: string;
   paralegal: string;
   status: "Open" | "In Progress" | "Review" | "Closed";

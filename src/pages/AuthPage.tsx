@@ -15,6 +15,10 @@ import {
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { useDispatch } from "react-redux";
+import { setAttorney } from "@/store/attorneySlice";
+import Cookies from "js-cookie";
+
 
 interface LoginCredentials {
   email: string;
@@ -35,6 +39,7 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const dispatch = useDispatch();
 
   const [loginData, setLoginData] = useState<LoginCredentials>({
     email: "",
@@ -62,7 +67,13 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
         credential: credentialResponse.credential
       }
     );
+   const { email, fullName } = response.data.data;
+   Cookies.set('token', response.data.token, { expires: 7 }); 
 
+   
+
+
+    dispatch(setAttorney({ email, fullName: fullName }));
     if (response.data.success) {
       setSuccess("Google login successful! Redirecting...");
       setTimeout(() => {

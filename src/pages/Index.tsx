@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { LegalDashboard } from "@/components/dashboard/DashboardStats";
+import { useSelector } from "react-redux";
+
+import { RootState } from "../store/store";
+
 
 
 const Index = () => {
+  const attorney = useSelector((state: RootState) => state.attorney);
+  console.log(attorney);
   return (
     <Layout>
       <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 p-4 space-y-8">
@@ -21,7 +27,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div className="space-y-3">
                 <h1 className="text-3xl font-bold animate-fade-in">
-                  Welcome back, Attorney Johnson
+                  Welcome back,{attorney.fullName}
                 </h1>
                 <p className="text-primary-foreground/90 text-lg animate-fade-in" style={{ animationDelay: "100ms" }}>
                   Your legal practice dashboard - AI-powered paralegal workforce at your fingertips

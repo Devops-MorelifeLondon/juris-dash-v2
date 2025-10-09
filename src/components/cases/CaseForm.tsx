@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Case } from "./types";
+import axios from "axios";
 
 interface CaseFormProps {
   caseData?: Case | null;
@@ -15,6 +16,7 @@ interface CaseFormProps {
 
 const emptyCase: Omit<Case, 'id' | 'createdDate' | 'lastUpdated' | 'timeSpent'> = {
   name: "",
+  casenumber: "",
   client: "",
   paralegal: "",
   status: "Open",
@@ -61,9 +63,13 @@ export default function CaseForm({ caseData, onSave, onCancel }: CaseFormProps) 
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(formData);
     onSave(formData as Case);
+    //  const response = await axios.post(
+    //         `${import.meta.env.VITE_BACKEND_URL}/api/cases/create`, formData
+    //       );
   };
 
   return (
@@ -74,6 +80,16 @@ export default function CaseForm({ caseData, onSave, onCancel }: CaseFormProps) 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="name">Case Number *</Label>
+              <Input 
+                id="name" 
+                value={formData.casenumber} 
+                onChange={(e) => handleChange("casenumber", e.target.value)} 
+                placeholder="e.g., 000001"
+                required 
+              />
+            </div>
             <div className="md:col-span-2">
               <Label htmlFor="name">Case Name *</Label>
               <Input 
@@ -94,20 +110,6 @@ export default function CaseForm({ caseData, onSave, onCancel }: CaseFormProps) 
                 placeholder="e.g., John Smith"
                 required 
               />
-            </div>
-
-            <div>
-              <Label htmlFor="paralegal">Assigned Paralegal</Label>
-              <Select value={formData.paralegal} onValueChange={(value) => handleChange("paralegal", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a paralegal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paralegals.map(paralegal => (
-                    <SelectItem key={paralegal} value={paralegal}>{paralegal}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div>

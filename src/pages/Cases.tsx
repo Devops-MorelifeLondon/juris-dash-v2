@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Layout } from "@/components/ui/layout";
 import { Case } from "@/components/cases/types";
 import CaseList from "@/components/cases/CaseList";
@@ -7,140 +7,79 @@ import CaseForm from "@/components/cases/CaseForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { FileText, Users, Clock, AlertCircle, Menu, X } from "lucide-react";
-
-const initialCases: Case[] = [
-  {
-    id: "case-001",
-    name: "Smith vs. Smith Divorce Proceeding",
-    client: "John Smith",
-    paralegal: "Alice Richardson",
-    status: "In Progress",
-    deadline: "2025-10-25",
-    serviceType: "Family Law",
-    priority: "High",
-    timeSpent: 24.5,
-    budget: 15000,
-    createdDate: "2025-09-01",
-    lastUpdated: "2025-09-25",
-    documents: [
-      {
-        id: "doc1",
-        title: "Divorce Petition Draft v2",
-        type: "Draft",
-        aiSuggestions: "Citation format needs correction on page 3. Consider adding precedent case Johnson v. Johnson (2023).",
-        sopCompliant: false,
-        uploadDate: "2025-09-20",
-        paralegalName: "Alice Richardson",
-        revisionCount: 2,
-        fileSize: "245 KB",
-        status: "Needs Revision"
-      },
-      {
-        id: "doc2",
-        title: "Asset Valuation Report",
-        type: "Final",
-        aiSuggestions: "Document compliant with firm standards.",
-        sopCompliant: true,
-        uploadDate: "2025-09-18",
-        paralegalName: "Alice Richardson",
-        revisionCount: 1,
-        fileSize: "1.2 MB",
-        status: "Approved"
-      }
-    ],
-    tasks: [
-      {
-        id: "task1",
-        description: "Draft divorce petition with property division",
-        type: "Drafting",
-        timeSpentMinutes: 180,
-        completed: true,
-        dueDate: "2025-09-22",
-        paralegalAssigned: "Alice Richardson",
-        priority: "High",
-        aiAssisted: true
-      },
-      {
-        id: "task2",
-        description: "Research precedent cases for custody arrangements",
-        type: "Research",
-        timeSpentMinutes: 120,
-        completed: false,
-        dueDate: "2025-09-28",
-        paralegalAssigned: "Alice Richardson",
-        priority: "Medium",
-        aiAssisted: true
-      }
-    ],
-    communications: [
-      {
-        id: "msg1",
-        from: "Attorney Johnson",
-        to: "Alice Richardson",
-        message: "Please update the citations in the divorce petition. The format should follow Bluebook 21st edition standards.",
-        timestamp: "2025-09-20T12:34:00",
-        type: "Internal"
-      },
-      {
-        id: "msg2",
-        from: "Alice Richardson",
-        to: "Attorney Johnson",
-        message: "Revision completed. AI compliance check shows 98% SOP adherence. Ready for review.",
-        timestamp: "2025-09-21T09:15:00",
-        type: "Internal"
-      }
-    ],
-    notes: "Complex case involving significant assets. Client is cooperative. Opposing counsel is requesting mediation."
-  },
-  {
-    id: "case-002",
-    name: "Jones Real Estate Purchase Contract",
-    client: "Mary Jones",
-    paralegal: "Bob Kumar",
-    status: "Open",
-    deadline: "2025-11-10",
-    serviceType: "Real Estate",
-    priority: "Medium",
-    timeSpent: 3.2,
-    budget: 5000,
-    createdDate: "2025-09-15",
-    lastUpdated: "2025-09-26",
-    documents: [],
-    tasks: [
-      {
-        id: "task3",
-        description: "Review purchase agreement terms",
-        type: "Review",
-        timeSpentMinutes: 90,
-        completed: false,
-        dueDate: "2025-09-30",
-        paralegalAssigned: "Bob Kumar",
-        priority: "Medium",
-        aiAssisted: false
-      }
-    ],
-    communications: [],
-    notes: "Standard residential purchase. No complications expected."
-  }
-];
+import { FileText, Users, Clock, AlertCircle, Menu, X, Cookie } from "lucide-react";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 export default function CaseManagementPage() {
-  const [cases, setCases] = useState<Case[]>(initialCases);
-  const [selectedCase, setSelectedCase] = useState<Case | null>(initialCases[0]);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [view, setView] = useState<"details" | "edit" | "new">("details");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
-    status: "All",
-    paralegal: "All",
-    serviceType: "All",
-    priority: "All"
+    status: "",
+    paralegal: "",
+    serviceType: "",
+    priority: "",
+    search: "",
+    page: 1,
+    limit: 10
   });
+
+  // Configure axios defaults with auth token
+  useEffect(() => {
+    const token = Cookies.get("token") // or however you store tokens
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, []);
+
+  // Fetch cases on component mount and when filters change
+  useEffect(() => {
+    fetchCases();
+  }, [filters.status, filters.priority, filters.serviceType, filters.search, filters.page]);
+
+  const fetchCases = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Build query params
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.priority) params.append('priority', filters.priority);
+      if (filters.serviceType) params.append('serviceType', filters.serviceType);
+      if (filters.search) params.append('search', filters.search);
+      params.append('page', filters.page.toString());
+      params.append('limit', filters.limit.toString());
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/cases/my-cases?${params.toString()}`
+      );
+
+      if (response.data.success) {
+        setCases(response.data.data);
+        
+        // Set first case as selected if none selected
+        if (!selectedCase && response.data.data.length > 0) {
+          setSelectedCase(response.data.data[0]);
+        }
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch cases. Please try again.";
+      setError(errorMessage);
+      console.error('💥 Fetch cases error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSave = (caseToSave: Case) => {
     if (view === "new") {
-      const newCase = { 
-        ...caseToSave, 
+      const newCase = {
+        ...caseToSave,
         id: `case-${Date.now()}`,
         createdDate: new Date().toISOString().split('T')[0],
         lastUpdated: new Date().toISOString().split('T')[0],
@@ -167,10 +106,10 @@ export default function CaseManagementPage() {
   };
 
   const filteredCases = cases.filter(c => {
-    return (filters.status === "All" || c.status === filters.status) &&
-           (filters.paralegal === "All" || c.paralegal === filters.paralegal) &&
-           (filters.serviceType === "All" || c.serviceType === filters.serviceType) &&
-           (filters.priority === "All" || c.priority === filters.priority);
+    return (filters.status === "" || filters.status === "All" || c.status === filters.status) &&
+      (filters.paralegal === "" || filters.paralegal === "All" || c.paralegal === filters.paralegal) &&
+      (filters.serviceType === "" || filters.serviceType === "All" || c.serviceType === filters.serviceType) &&
+      (filters.priority === "" || filters.priority === "All" || c.priority === filters.priority);
   });
 
   // Calculate dashboard stats
@@ -182,6 +121,29 @@ export default function CaseManagementPage() {
   };
 
   const renderMainContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
+            <p className="text-muted-foreground">Loading cases...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={fetchCases}>Retry</Button>
+          </div>
+        </div>
+      );
+    }
+
     switch (view) {
       case "new":
       case "edit":
@@ -195,8 +157,8 @@ export default function CaseManagementPage() {
       case "details":
       default:
         return selectedCase ? (
-          <CaseDetails 
-            caseData={selectedCase} 
+          <CaseDetails
+            caseData={selectedCase}
             onEdit={() => setView("edit")}
             onUpdateCase={(updatedCase) => {
               setCases(cases.map(c => c.id === updatedCase.id ? updatedCase : c));
@@ -232,7 +194,7 @@ export default function CaseManagementPage() {
   return (
     <Layout>
       <div className="flex flex-col w-full max-w-7xl mx-auto px-6 lg:px-8 p-4 space-y-8">
-        {/* Mobile Header - Visible only on mobile */}
+        {/* Mobile Header */}
         <div className="lg:hidden">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -267,7 +229,7 @@ export default function CaseManagementPage() {
           </div>
         </div>
 
-        {/* Page Header with Stats - Always visible but different on mobile */}
+        {/* Page Header with Stats */}
         <div className="flex-none p-4 md:p-6 border-b bg-background rounded-lg">
           <div className="flex items-center justify-between mb-6">
             <div className="hidden lg:block">
@@ -343,7 +305,7 @@ export default function CaseManagementPage() {
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation - Visible only on mobile */}
+        {/* Mobile Bottom Navigation */}
         <div className="lg:hidden">
           <div className="bg-background border rounded-lg p-4">
             <div className="grid grid-cols-3 gap-3">
