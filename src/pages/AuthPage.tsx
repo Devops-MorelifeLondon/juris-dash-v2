@@ -66,7 +66,7 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
     if (response.data.success) {
       setSuccess("Google login successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }, 1200);
     } else {
       setError(response.data.message || "Google login failed");
@@ -92,7 +92,7 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
 
       if (response.data.success) {
         setSuccess("Login successful! Redirecting...");
-        setTimeout(() => (window.location.href = "/dashboard"), 1000);
+        setTimeout(() => (window.location.href = "/"), 1000);
       } else {
         throw new Error(response.data.message || "Invalid credentials");
       }
