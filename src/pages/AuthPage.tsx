@@ -18,6 +18,10 @@ import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { setAttorney } from "@/store/attorneySlice";
 import Cookies from "js-cookie";
+import { useGoogleOneTapLogin } from "@react-oauth/google";
+
+
+
 
 
 interface LoginCredentials {
@@ -87,7 +91,11 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
     setError(err.response?.data?.message || err.message);
   }
 };
-
+// At the top of your component
+useGoogleOneTapLogin({
+  onSuccess: handleGoogleAuth,
+  onError: () => setError("Google Login Failed")
+});
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +108,14 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/login`,
         loginData
       );
+
+         const { email, fullName } = response.data.data;
+   Cookies.set('token', response.data.token, { expires: 7 }); 
+
+   
+
+
+    dispatch(setAttorney({ email, fullName: fullName }));
 
       if (response.data.success) {
         setSuccess("Login successful! Redirecting...");
@@ -302,7 +318,7 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
                     <GoogleLogin
                       onSuccess={handleGoogleAuth}
                       onError={() => setError("Google Login Failed")}
-                      useOneTap
+                     
                     />
                   </div>
 
@@ -421,7 +437,7 @@ const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
                     <GoogleLogin
                       onSuccess={handleGoogleAuth}
                       onError={() => setError("Google Login Failed")}
-                      useOneTap
+                      
                     />
                   </div>
 

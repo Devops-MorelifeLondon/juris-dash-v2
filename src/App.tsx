@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,11 +10,12 @@ import Compliance from "./pages/Compliance";
 import Billing from "./pages/Billing";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import TrainYourResource from "./pages/Training";
+
 import ParalegalDashboard from "./pages/MyParalegals";
 import ProfilePage from "./pages/Profile";
 import AuthPage from "./pages/AuthPage";
-
+import { SectionTrain } from "./pages/Training";
+import { Toaster, toast } from "sonner";
 
 
 
@@ -25,13 +26,13 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
+<Toaster  position="top-right" />
+ 
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/cases" element={<Cases />} />
-          <Route path="/training" element={<TrainYourResource />} />
+          <Route path="/training" element={<SectionTrain />} />
           <Route path="/services" element={<Services />} />
           <Route path="/compliance" element={<Compliance />} />
           <Route path="/billing" element={<Billing />} />

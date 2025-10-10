@@ -7,9 +7,10 @@ import CaseForm from "@/components/cases/CaseForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { FileText, Users, Clock, AlertCircle, Menu, X, Cookie } from "lucide-react";
+import { FileText, Users, Clock, AlertCircle, Menu, X } from "lucide-react";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { Toaster, toast } from "sonner";
 
 export default function CaseManagementPage() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -25,76 +26,87 @@ export default function CaseManagementPage() {
     priority: "",
     search: "",
     page: 1,
-    limit: 10
+    limit: 10,
   });
 
-  // Configure axios defaults with auth token
+  // Attach token to axios
   useEffect(() => {
-    const token = Cookies.get("token") // or however you store tokens
+    const token = Cookies.get("token");
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
   }, []);
 
-  // Fetch cases on component mount and when filters change
   useEffect(() => {
     fetchCases();
-  }, [filters.status, filters.priority, filters.serviceType, filters.search, filters.page]);
+  }, [
+    filters.status,
+    filters.priority,
+    filters.serviceType,
+    filters.search,
+    filters.page,
+  ]);
 
   const fetchCases = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Build query params
       const params = new URLSearchParams();
-      if (filters.status) params.append('status', filters.status);
-      if (filters.priority) params.append('priority', filters.priority);
-      if (filters.serviceType) params.append('serviceType', filters.serviceType);
-      if (filters.search) params.append('search', filters.search);
-      params.append('page', filters.page.toString());
-      params.append('limit', filters.limit.toString());
+      if (filters.status) params.append("status", filters.status);
+      if (filters.priority) params.append("priority", filters.priority);
+      if (filters.serviceType) params.append("serviceType", filters.serviceType);
+      if (filters.search) params.append("search", filters.search);
+      params.append("page", filters.page.toString());
+      params.append("limit", filters.limit.toString());
 
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/cases/my-cases?${params.toString()}`
       );
 
-      if (response.data.success) {
-        setCases(response.data.data);
-        
-        // Set first case as selected if none selected
-        if (!selectedCase && response.data.data.length > 0) {
-          setSelectedCase(response.data.data[0]);
-        }
+      const caseData = Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
+
+      setCases(caseData);
+
+      if (!selectedCase && caseData.length > 0) {
+        setSelectedCase(caseData[0]);
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to fetch cases. Please try again.";
-      setError(errorMessage);
-      console.error('💥 Fetch cases error:', err);
+      console.error("❌ Error fetching cases:", err);
+      setError(
+        err.response?.data?.message || "Failed to fetch cases. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSave = (caseToSave: Case) => {
+    const now = new Date().toISOString().split("T")[0];
+
     if (view === "new") {
       const newCase = {
         ...caseToSave,
-        id: `case-${Date.now()}`,
-        createdDate: new Date().toISOString().split('T')[0],
-        lastUpdated: new Date().toISOString().split('T')[0],
-        timeSpent: 0
+        _id: `temp-${Date.now()}`,
+        createdDate: now,
+        lastUpdated: now,
+        timeSpent: 0,
       };
       setCases([newCase, ...cases]);
       setSelectedCase(newCase);
     } else {
-      const updatedCase = {
-        ...caseToSave,
-        lastUpdated: new Date().toISOString().split('T')[0]
-      };
-      setCases(cases.map((c) => (c.id === caseToSave.id ? updatedCase : c)));
+      const updatedCase = { ...caseToSave, lastUpdated: now };
+      setCases((prev) =>
+        prev.map((c) => (c._id === updatedCase._id ? updatedCase : c))
+      );
       setSelectedCase(updatedCase);
     }
+      toast.success("Case created successfully", {
+        description: `${caseToSave.name} has been added to your cases.`,
+      });
+
     setView("details");
     setIsMobileMenuOpen(false);
   };
@@ -105,19 +117,28 @@ export default function CaseManagementPage() {
     setIsMobileMenuOpen(false);
   };
 
-  const filteredCases = cases.filter(c => {
-    return (filters.status === "" || filters.status === "All" || c.status === filters.status) &&
-      (filters.paralegal === "" || filters.paralegal === "All" || c.paralegal === filters.paralegal) &&
-      (filters.serviceType === "" || filters.serviceType === "All" || c.serviceType === filters.serviceType) &&
-      (filters.priority === "" || filters.priority === "All" || c.priority === filters.priority);
+  const filteredCases = cases.filter((c) => {
+    return (
+      (!filters.status || filters.status === "All" || c.status === filters.status) &&
+      (!filters.paralegal || filters.paralegal === "All" || c.paralegal === filters.paralegal) &&
+      (!filters.serviceType || filters.serviceType === "All" || c.serviceType === filters.serviceType) &&
+      (!filters.priority || filters.priority === "All" || c.priority === filters.priority)
+    );
   });
 
-  // Calculate dashboard stats
+  // Prevent runtime crash if fields missing
+  const safeArray = (arr: any) => (Array.isArray(arr) ? arr : []);
+
   const stats = {
     totalCases: cases.length,
-    activeCases: cases.filter(c => c.status === "In Progress").length,
-    pendingReview: cases.filter(c => c.documents.some(d => d.status === "Needs Revision")).length,
-    overdueDeadlines: cases.filter(c => new Date(c.deadline) < new Date()).length
+    activeCases: cases.filter((c) => c.status === "In Progress").length,
+    pendingReview: cases.filter((c) =>
+      safeArray(c.documents).some((d: any) => d.status === "Needs Revision")
+    ).length,
+    overdueDeadlines: cases.filter((c) => {
+      const deadline = c.deadline ? new Date(c.deadline) : null;
+      return deadline && deadline < new Date();
+    }).length,
   };
 
   const renderMainContent = () => {
@@ -161,7 +182,9 @@ export default function CaseManagementPage() {
             caseData={selectedCase}
             onEdit={() => setView("edit")}
             onUpdateCase={(updatedCase) => {
-              setCases(cases.map(c => c.id === updatedCase.id ? updatedCase : c));
+              setCases((prev) =>
+                prev.map((c) => (c._id === updatedCase._id ? updatedCase : c))
+              );
               setSelectedCase(updatedCase);
             }}
           />
@@ -169,7 +192,9 @@ export default function CaseManagementPage() {
           <div className="flex items-center justify-center h-full rounded-lg bg-muted/50">
             <div className="text-center">
               <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Select a case to view its details or create a new one.</p>
+              <p className="text-muted-foreground">
+                Select a case to view its details or create a new one.
+              </p>
             </div>
           </div>
         );
@@ -179,7 +204,7 @@ export default function CaseManagementPage() {
   const CaseListComponent = () => (
     <CaseList
       cases={filteredCases}
-      selectedCaseId={selectedCase?.id}
+      selectedCaseId={selectedCase?._id}
       onSelectCase={handleSelectCase}
       onCreateNew={() => {
         setSelectedCase(null);
@@ -229,115 +254,79 @@ export default function CaseManagementPage() {
           </div>
         </div>
 
-        {/* Page Header with Stats */}
+        {/* Stats Header */}
         <div className="flex-none p-4 md:p-6 border-b bg-background rounded-lg">
-          <div className="flex items-center justify-between mb-6">
-            <div className="hidden lg:block">
-              <h1 className="text-2xl font-semibold tracking-tight">Cases Management</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage and track all legal cases with AI-powered insights
-              </p>
-            </div>
+          <div className="hidden lg:block mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Cases Management
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage and track all legal cases with AI-powered insights
+            </p>
           </div>
 
-          {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             <Card className="p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Cases</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent>
                 <div className="text-2xl font-bold">{stats.totalCases}</div>
               </CardContent>
             </Card>
 
             <Card className="p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent>
                 <div className="text-2xl font-bold text-blue-600">{stats.activeCases}</div>
               </CardContent>
             </Card>
 
             <Card className="p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="text-2xl font-bold text-yellow-600">{stats.pendingReview}</div>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {stats.pendingReview}
+                </div>
               </CardContent>
             </Card>
 
             <Card className="p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Overdue</CardTitle>
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="text-2xl font-bold text-red-600">{stats.overdueDeadlines}</div>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {stats.overdueDeadlines}
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <div className="flex-1 min-h-[600px]">
           <div className="flex flex-col lg:flex-row h-full gap-6">
-            {/* Case List - Desktop only */}
+            {/* Sidebar List */}
             <div className="hidden lg:block w-full lg:w-96 xl:w-[400px] flex-shrink-0">
               <div className="h-full bg-background border rounded-lg">
                 <CaseListComponent />
               </div>
             </div>
 
-            {/* Main Content */}
+            {/* Main Details */}
             <div className="flex-1 min-h-0">
-              <div className="h-full bg-background border rounded-lg">
-                <div className="h-full overflow-y-auto p-2">
-                  {renderMainContent()}
-                </div>
+              <div className="h-full bg-background border rounded-lg overflow-y-auto p-2">
+                {renderMainContent()}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden">
-          <div className="bg-background border rounded-lg p-4">
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant={view === "details" ? "default" : "outline"}
-                size="default"
-                onClick={() => setView("details")}
-                disabled={!selectedCase}
-                className="w-full"
-              >
-                Details
-              </Button>
-              <Button
-                variant={view === "edit" ? "default" : "outline"}
-                size="default"
-                onClick={() => setView("edit")}
-                disabled={!selectedCase}
-                className="w-full"
-              >
-                Edit
-              </Button>
-              <Button
-                variant={view === "new" ? "default" : "outline"}
-                size="default"
-                onClick={() => {
-                  setSelectedCase(null);
-                  setView("new");
-                }}
-                className="w-full"
-              >
-                New Case
-              </Button>
             </div>
           </div>
         </div>

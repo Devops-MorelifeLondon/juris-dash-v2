@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { 
   LayoutDashboard, Briefcase, GraduationCap, Package, Shield, CreditCard, 
-  Settings, Plus, Search, Bell, Users, Calendar, User2
+  Settings, Plus, Search, Bell, Users, Calendar, User2, LogOut
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import {
   Sidebar,
   SidebarContent,
@@ -17,10 +18,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useDispatch } from "react-redux";
+import { clearAttorney } from "@/store/attorneySlice";
+import { persistor } from "@/store/store";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, badge: null },
@@ -34,7 +37,7 @@ const navigationItems = [
 ];
 
 const quickActions = [
-  { title: "New Case", icon: Plus, action: "new-case" },
+  { title: "New Case", icon: Plus, action: "/cases" },
   { title: "Assign Task", icon: Users, action: "assign-task" },
   { title: "Schedule Meeting", icon: Calendar, action: "schedule" },
 ];
@@ -42,14 +45,31 @@ const quickActions = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const currentPath = location.pathname;
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const currentPath = location.pathname;
+  const isCollapsed = state === "collapsed";
 
   const isActive = (path: string) => {
     return path === "/" ? currentPath === "/" : currentPath.startsWith(path);
   };
 
-  const isCollapsed = state === "collapsed";
+  // ✅ FIXED: hooks used outside and only logic inside the function
+  const handleLogout = () => {
+    // 1️⃣ Remove auth token cookie
+    Cookies.remove("token", { path: "/" });
+
+    // 2️⃣ Clear Redux state
+    dispatch(clearAttorney());
+
+    // 3️⃣ Purge persisted redux storage
+    persistor.purge();
+
+    // 4️⃣ Redirect to auth page
+    navigate("/auth");
+  };
 
   return (
     <Sidebar
@@ -107,7 +127,12 @@ export function AppSidebar() {
                           : "text-gray-700 hover:bg-gray-100"
                       )}
                     >
-                      <item.icon className={cn("w-5 h-5", isActive(item.url) ? "text-blue-600" : "text-gray-400")} />
+                      <item.icon
+                        className={cn(
+                          "w-5 h-5",
+                          isActive(item.url) ? "text-blue-600" : "text-gray-400"
+                        )}
+                      />
                       {!isCollapsed && (
                         <>
                           <span className="flex-1">{item.title}</span>
@@ -137,15 +162,14 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <div className="flex flex-col gap-2">
                 {quickActions.map((action) => (
-                  <Button
+                  <Link
                     key={action.title}
-                    variant="ghost"
-                    size="sm"
+                    to={action.action}
                     className="flex items-center gap-2 justify-start px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                   >
                     <action.icon className="w-4 h-4" />
                     {action.title}
-                  </Button>
+                  </Link>
                 ))}
               </div>
             </SidebarGroupContent>
@@ -163,12 +187,30 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 transition-all duration-200",
                   isCollapsed ? "justify-center" : "justify-start",
-                  isActive("/settings") ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100"
+                  isActive("/settings")
+                    ? "bg-blue-100 text-blue-600"
+                    : "hover:bg-gray-100"
                 )}
               >
                 <Settings className="w-5 h-5" />
                 {!isCollapsed && <span>Settings</span>}
               </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button
+                onClick={handleLogout}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 transition-all duration-200 w-full",
+                  isCollapsed ? "justify-center" : "justify-start",
+                  "hover:bg-red-50"
+                )}
+              >
+                <LogOut className="w-5 h-5" />
+                {!isCollapsed && <span>Logout</span>}
+              </button>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

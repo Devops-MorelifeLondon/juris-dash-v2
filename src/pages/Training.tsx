@@ -1,569 +1,329 @@
-import React from "react";
-import {
-  Bot,
-  Users,
-  Brain,
-  FileText,
-  Zap,
-  CheckCircle,
-  ArrowRight,
-  Target,
-  Settings,
-  BookOpen,
-  Gavel,
-  Shield,
-  Play,
-  TrendingUp,
-  Award, // Added for Leaderboard
-  ClipboardCheck, // Added for Progress Tracker
-  MessageSquare, // Added for Feedback Button
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layout } from "@/components/ui/layout";
+import React from "react";
 
-const TrainYourResource = () => {
-  const workflowSteps = [
-    {
-      icon: Bot,
-      title: "AgenticAI Processing",
-      description:
-        "AI generates compliant, formatted drafts based on court rules and attorney preferences.",
-      color: "from-blue-500 to-cyan-400",
-      status: "processing",
-    },
-    {
-      icon: Users,
-      title: "Human Paralegal Review",
-      description:
-        "Paralegal adds substantive content, legal research, and citations.",
-      color: "from-purple-500 to-pink-400",
-      status: "active",
-    },
-    {
-      icon: CheckCircle,
-      title: "Attorney Approval",
-      description: "Final review and approval by the attorney before delivery.",
-      color: "from-green-500 to-emerald-400",
-      status: "pending",
-    },
-  ];
-
-  const aiFeatures = [
-    {
-      icon: FileText,
-      title: "Compliant Formatting",
-      description:
-        "Attorney-specific + court-rule-specific formatting applied automatically.",
-      progress: 100,
-    },
-    {
-      icon: Zap,
-      title: "Hyperlinking & Citations",
-      description:
-        "Cross-references, exhibits, and Bluebook citations generated.",
-      progress: 95,
-    },
-    {
-      icon: Shield,
-      title: "Error Detection",
-      description:
-        "Formatting, alignment, and style error detection and correction.",
-      progress: 90,
-    },
-    {
-      icon: Settings,
-      title: "Custom Preferences",
-      description: "Font, spacing, headings, tone, and page layout preferences.",
-      progress: 85,
-    },
-  ];
-
-  const humanTasks = [
-    {
-      icon: Brain,
-      title: "Legal Research",
-      description: "In-depth legal research and case law analysis.",
-      specialist: "Research Specialist",
-    },
-    {
-      icon: Gavel,
-      title: "Substantive Drafting",
-      description: "Arguments, motions, pleadings, and contract development.",
-      specialist: "Legal Writer",
-    },
-    {
-      icon: BookOpen,
-      title: "Trial Preparation",
-      description:
-        "Support materials and documentation for court proceedings.",
-      specialist: "Trial Assistant",
-    },
-    {
-      icon: CheckCircle,
-      title: "Final Review",
-      description: "Accuracy verification and legal compliance checking.",
-      specialist: "Quality Assurance",
-    },
-  ];
-
-  const trainingModules = [
-    {
-      title: "Court Rules Training",
-      description:
-        "Pre-launch AI training on formatting, citations, and compliance standards.",
-      status: "Pre-Launch Requirement",
-      progress: 100,
-      type: "system",
-    },
-    {
-      title: "Attorney SOPs",
-      description:
-        "Custom training on attorney-specific style, tone, and preferences.",
-      status: "Post-Launch Customization",
-      progress: 75,
-      type: "custom",
-    },
-    {
-      title: "Document Templates",
-      description:
-        "Generate template-ready drafts for various legal document types.",
-      status: "Ongoing Enhancement",
-      progress: 60,
-      type: "templates",
-    },
-  ];
-
-  const progressData = [
-    {
-      title: "Active Documents",
-      value: "78",
-      icon: FileText,
-      color: "text-blue-500",
-    },
-    {
-      title: "Paralegals Trained",
-      value: "12",
-      icon: Users,
-      color: "text-purple-500",
-    },
-    {
-      title: "Accuracy Rate",
-      value: "99.2%",
-      icon: CheckCircle,
-      color: "text-green-500",
-    },
-  ];
-
-  const paralegalLeaderboard = [
-    {
-      name: "Ananya Sharma",
-      score: 98,
-      avatar: "/avatars/01.png",
-      rank: 1,
-    },
-    { name: "Rohan Gupta", score: 95, avatar: "/avatars/02.png", rank: 2 },
-    { name: "Priya Singh", score: 92, avatar: "/avatars/03.png", rank: 3 },
-    {
-      name: "Sameer Joshi",
-      score: 89,
-      avatar: "/avatars/04.png",
-      rank: 4,
-    },
-  ];
-
+const SectionTrain = () => {
   return (
     <Layout>
-      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 p-4 space-y-8">
-        <div className="max-w-7xl mx-auto space-y-12">
+      <section id="train" className="bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto py-16 px-6 lg:px-12">
+          
           {/* Header */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-primary p-8 text-primary-foreground shadow-elegant">
-              Train Your Own Resource
-            </h1>
-            <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
-              Hybrid AgenticAI + Human Paralegal Model for Efficient,
-              Attorney-Ready Legal Support
+          <div className="mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+              Hybrid AgenticAI Dashboard
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 max-w-3xl leading-relaxed">
+              A unified platform where AI drafts documents, paralegals review and refine them, 
+              and attorneys approve—streamlining legal workflows with precision and efficiency.
             </p>
           </div>
 
-          {/* Workflow Visualization */}
-          <Card className="bg-white shadow-lg border border-slate-200/80">
-            <CardHeader className="bg-slate-100/70 p-6 border-b border-slate-200">
-              <CardTitle className="flex items-center gap-3 text-2xl text-slate-800">
-                <Target className="w-7 h-7 text-blue-600" />
-                Hybrid Workflow Process
-              </CardTitle>
-              <CardDescription className="text-slate-500">
-                AI handles automation, while humans focus on substantive legal
-                work.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8 md:gap-4 relative">
-                <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-0 right-0 h-px bg-slate-300" />
-
-                {workflowSteps.map((step, index) => (
-                  <div
-                    key={step.title}
-                    className="relative z-10 flex flex-col items-center text-center w-full md:w-1/3 px-4"
-                  >
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 w-full">
-                      <div
-                        className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-gradient-to-br ${step.color} shadow-lg`}
-                      >
-                        <step.icon className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                        {step.title}
-                      </h3>
-                      <p className="text-slate-600 text-sm mb-4 min-h-[40px]">
-                        {step.description}
-                      </p>
-                      <Badge
-                        className={`font-semibold capitalize
-                          ${
-                            step.status === "processing"
-                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                              : ""
-                          }
-                          ${
-                            step.status === "active"
-                              ? "bg-blue-100 text-blue-800 border-blue-200"
-                              : ""
-                          }
-                          ${
-                            step.status === "pending"
-                              ? "bg-slate-100 text-slate-800 border-slate-200"
-                              : ""
-                          }`}
-                      >
-                        {step.status}
-                      </Badge>
-                    </div>
-                    {index < workflowSteps.length - 1 && (
-                      <ArrowRight className="absolute top-[45%] -right-3 w-6 h-6 text-slate-400 hidden md:block" />
-                    )}
+          {/* Workflow Status Pipeline */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-gray-900">Workflow Status</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+              <div className="relative p-6 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl font-bold text-blue-700">15</div>
+                  <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
                   </div>
-                ))}
+                </div>
+                <div className="text-base font-semibold text-gray-900 mb-1">AI Draft</div>
+                <div className="text-sm text-gray-600">
+                  Documents in AI generation queue
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* New Grid for Progress Tracker and Leaderboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Progress Tracker */}
-            <div className="lg:col-span-1">
-              <Card className="bg-white shadow-lg border border-slate-200/80 h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <ClipboardCheck className="w-6 h-6 text-green-600" />
-                    Progress Tracker
-                  </CardTitle>
-                  <CardDescription>
-                    Real-time operational metrics.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {progressData.map((item) => (
-                    <div
-                      key={item.title}
-                      className="flex items-center justify-between bg-slate-50/70 p-4 rounded-lg border border-slate-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon
-                          className={`w-6 h-6 ${item.color}`}
-                        />
-                        <span className="font-medium text-sm text-slate-700">
-                          {item.title}
-                        </span>
-                      </div>
-                      <br />
-                      <span className="font-bold text-lg text-slate-800">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Leaderboard */}
-            <div className="lg:col-span-2">
-              <Card className="bg-white shadow-lg border border-slate-200/80 h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <Award className="w-6 h-6 text-yellow-500" />
-                    Top Performing Paralegals
-                  </CardTitle>
-                  <CardDescription>
-                    Recognizing excellence and efficiency.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {paralegalLeaderboard.map((paralegal) => (
-                      <div
-                        key={paralegal.name}
-                        className="flex items-center gap-4 bg-slate-50/70 p-3 rounded-lg border border-slate-200 transition-all hover:bg-slate-100"
-                      >
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 font-bold text-slate-600 text-lg">
-                          {paralegal.rank}
-                        </div>
-                        {/* Placeholder for avatar image */}
-                        <div className="w-12 h-12 rounded-full bg-slate-300 flex-shrink-0">
-                          {/* <img src={paralegal.avatar} alt={paralegal.name} className="w-full h-full object-cover rounded-full" /> */}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-slate-800">
-                            {paralegal.name}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg text-blue-600">
-                            {paralegal.score} pts
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+              <div className="relative p-6 rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl font-bold text-orange-700">20</div>
+                  <div className="w-12 h-12 rounded-full bg-orange-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="text-base font-semibold text-gray-900 mb-1">Paralegal Review</div>
+                <div className="text-sm text-gray-600">
+                  Awaiting human verification
+                </div>
+              </div>
+
+              <div className="relative p-6 rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl font-bold text-green-700">10</div>
+                  <div className="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-base font-semibold text-gray-900 mb-1">Attorney Approval</div>
+                <div className="text-sm text-gray-600">
+                  Pending final authorization
+                </div>
+              </div>
+
+              <div className="relative p-6 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl font-bold text-emerald-700">33</div>
+                  <div className="w-12 h-12 rounded-full bg-emerald-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-base font-semibold text-gray-900 mb-1">Completed</div>
+                <div className="text-sm text-gray-600">
+                  Successfully finalized
+                </div>
+              </div>
+
             </div>
           </div>
 
-          {/* Main Content Tabs */}
-          <Tabs defaultValue="ai-features" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-8 bg-slate-200/80 p-1.5 h-auto rounded-lg gap-1">
-              {[
-                { value: "ai-features", label: "AgenticAI Features", icon: Bot },
-                { value: "human-tasks", label: "Human Expertise", icon: Users },
-                {
-                  value: "training",
-                  label: "Training Modules",
-                  icon: BookOpen,
-                },
-              ].map(({ value, label, icon: Icon }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="flex items-center justify-center gap-2 text-slate-600 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-md rounded-md py-2.5 text-sm font-medium"
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {/* AI Features Tab */}
-            <TabsContent value="ai-features">
-              <Card className="bg-white shadow-lg border border-slate-200/80">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-blue-600">
-                    <Bot className="w-6 h-6" />
-                    AgenticAI Core Capabilities
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">
-                    Automated formatting, compliance, and structural tasks
-                    handled by AI.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {aiFeatures.map((feature) => (
-                    <div
-                      key={feature.title}
-                      className="bg-slate-50/70 p-6 rounded-lg border border-slate-200"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
-                          <feature.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-slate-800 mb-2">
-                            {feature.title}
-                          </h3>
-                          <p className="text-slate-600 text-sm mb-4">
-                            {feature.description}
-                          </p>
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full"
-                              style={{ width: `${feature.progress}%` }}
-                            />
+          {/* Two-Column Layout */}
+          <div className="grid lg:grid-cols-2 gap-10 mb-12">
+            
+            {/* Left Column */}
+            <div className="space-y-10">
+              
+              {/* Paralegal Performance */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-6 text-gray-900">
+                  Performance Leaderboard
+                </h3>
+                <div className="space-y-4">
+                  
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl">🥇</div>
+                        <div>
+                          <div className="font-semibold text-base text-gray-900">Ananya Sharma</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            98 pts · 12 docs · 2.5 hrs avg
                           </div>
                         </div>
+                      </div>
+                      <div className="px-3 py-1.5 rounded-lg bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                        Top Performer
                       </div>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </div>
 
-            {/* Human Tasks Tab */}
-            <TabsContent value="human-tasks">
-              <Card className="bg-white shadow-lg border border-slate-200/80">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-purple-600">
-                    <Users className="w-6 h-6" />
-                    Human Paralegal Responsibilities
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">
-                    High-value legal work requiring human judgment and
-                    expertise.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {humanTasks.map((task) => (
-                      <div
-                        key={task.title}
-                        className="bg-slate-50/70 p-6 rounded-lg border border-slate-200"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center flex-shrink-0">
-                            <task.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-800 mb-2">
-                              {task.title}
-                            </h3>
-                            <p className="text-slate-600 text-sm mb-3">
-                              {task.description}
-                            </p>
-                            <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                              {task.specialist}
-                            </Badge>
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl">🥈</div>
+                        <div>
+                          <div className="font-semibold text-base text-gray-900">Rohan Gupta</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            95 pts · 10 docs · 3 hrs avg
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-slate-200">
-                    <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90">
-                      <Users className="w-4 h-4 mr-2" />
-                      Assign Human Paralegal
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 text-slate-700 border-slate-300"
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      View Performance Analytics
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Training Tab */}
-            <TabsContent value="training">
-              <Card className="bg-white shadow-lg border border-slate-200/80">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-indigo-600">
-                    <BookOpen className="w-6 h-6" />
-                    Training & Development Modules
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">
-                    Continuous learning system for AI and human resources.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {trainingModules.map((module) => (
-                    <div
-                      key={module.title}
-                      className="bg-slate-50/70 p-6 rounded-lg border border-slate-200"
-                    >
-                      <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-slate-800 text-lg mb-2">
-                            {module.title}
-                          </h3>
-                          <p className="text-slate-600 text-sm mb-3">
-                            {module.description}
-                          </p>
-                          <Badge
-                            className={`
-                              ${
-                                module.type === "system"
-                                  ? "bg-green-100 text-green-800 border-green-200"
-                                  : ""
-                              }
-                              ${
-                                module.type === "custom"
-                                  ? "bg-slate-200 text-slate-800 border-slate-300"
-                                  : ""
-                              }
-                              ${
-                                module.type === "templates"
-                                  ? "bg-blue-100 text-blue-800 border-blue-200"
-                                  : ""
-                              }
-                            `}
-                          >
-                            {module.status}
-                          </Badge>
-                        </div>
-                        <div className="text-right flex-shrink-0 w-full md:w-auto mt-4 md:mt-0">
-                          <div className="text-3xl font-bold text-indigo-600 mb-1">
-                            {module.progress}%
-                          </div>
-                          <div className="w-full md:w-28 bg-slate-200 rounded-full h-2.5">
-                            <div
-                              className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
-                              style={{ width: `${module.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-slate-200">
-                        <Button
-                          size="sm"
-                          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90 w-full sm:w-auto"
-                          disabled={module.progress === 100}
-                        >
-                          {module.progress === 100 ? (
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                          ) : (
-                            <Play className="w-4 h-4 mr-2" />
-                          )}
-                          {module.progress === 100
-                            ? "Completed"
-                            : "Continue Training"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-slate-700 border-slate-300 w-full sm:w-auto"
-                        >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Configure
-                        </Button>
+                      <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold">
+                        Consistent
                       </div>
                     </div>
-                  ))}
-                  {/* New Assign Training / Feedback Button */}
-                  <div className="mt-8 pt-6 border-t border-slate-200">
-                    <Button className="w-full bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:opacity-90">
-                      <MessageSquare className="w-5 h-5 mr-2" />
-                      Assign Training / Provide Feedback
-                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl">🥉</div>
+                        <div>
+                          <div className="font-semibold text-base text-gray-900">Priya Mehta</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            92 pts · 9 docs · 3.2 hrs avg
+                          </div>
+                        </div>
+                      </div>
+                      <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold">
+                        Reliable
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* AgenticAI Metrics */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-6 text-gray-900">AI Performance</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">96%</div>
+                    <div className="text-sm text-gray-600 leading-snug">
+                      Draft Accuracy Rate
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="text-3xl font-bold text-red-600 mb-2">5</div>
+                    <div className="text-sm text-gray-600 leading-snug">
+                      AI Errors Flagged
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="text-3xl font-bold text-green-600 mb-2">12</div>
+                    <div className="text-sm text-gray-600 leading-snug">
+                      Drafts Today
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div className="text-3xl font-bold text-emerald-600 mb-2">100%</div>
+                    <div className="text-sm text-gray-600 leading-snug">
+                      Training Complete
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column - Training Progress */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-6 text-gray-900">
+                Training & Development
+              </h3>
+              <div className="space-y-6">
+                
+                <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-base font-semibold text-gray-900">Paralegal Training</div>
+                    <div className="text-sm font-semibold text-blue-600">85%</div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500" 
+                      style={{ width: '85%' }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Court rules, SOPs, Document Templates
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-base font-semibold text-gray-900">AI Model Training</div>
+                    <div className="text-sm font-semibold text-green-600">100%</div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500" 
+                      style={{ width: '100%' }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Pre-launch, Post-launch customization
+                  </div>
+                </div>
+
+                {/* Recent Training Activities */}
+                <div className="mt-8">
+                  <h4 className="text-lg font-semibold mb-4 text-gray-900">Recent Activity</h4>
+                  <div className="space-y-3">
+                    
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">New template uploaded</div>
+                        <div className="text-xs text-gray-600 mt-1">Civil complaint - District Court · 2 hours ago</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50">
+                      <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">AI training completed</div>
+                        <div className="text-xs text-gray-600 mt-1">Updated jurisdiction rules · 5 hours ago</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-50">
+                      <div className="w-2 h-2 rounded-full bg-orange-500 mt-2"></div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">SOP updated</div>
+                        <div className="text-xs text-gray-600 mt-1">Document review checklist v2.1 · 1 day ago</div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* Operational KPIs */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-gray-900">Key Performance Indicators</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+              <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm text-center hover:shadow-md transition-shadow duration-200">
+                <div className="text-3xl font-bold text-blue-600 mb-2">99.2%</div>
+                <div className="text-sm text-gray-600">
+                  Overall Accuracy
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm text-center hover:shadow-md transition-shadow duration-200">
+                <div className="text-3xl font-bold text-purple-600 mb-2">3.2 hrs</div>
+                <div className="text-sm text-gray-600">
+                  Avg Turnaround
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm text-center hover:shadow-md transition-shadow duration-200">
+                <div className="text-3xl font-bold text-green-600 mb-2">33 / 45</div>
+                <div className="text-sm text-gray-600">
+                  Completion Rate
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl border border-gray-200 bg-white shadow-sm text-center hover:shadow-md transition-shadow duration-200">
+                <div className="text-base font-semibold text-orange-600 mb-2">
+                  Paralegal Review
+                </div>
+                <div className="text-sm text-gray-600">
+                  Current Bottleneck
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="text-center py-8">
+            <button className="group px-10 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-base hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5">
+              <span className="flex items-center gap-2">
+                Upload Training Documents
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </span>
+            </button>
+            <p className="mt-4 text-sm text-gray-600 max-w-2xl mx-auto">
+              Add templates, SOPs, court rules, and research materials to continuously improve AI accuracy and paralegal efficiency
+            </p>
+          </div>
+
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };
 
-export default TrainYourResource;
+export { SectionTrain };
