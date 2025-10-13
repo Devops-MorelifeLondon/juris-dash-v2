@@ -28,6 +28,7 @@ import { persistor } from "@/store/store";
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, badge: null },
   { title: "Cases", url: "/cases", icon: Briefcase, badge: "12" },
+  { title: "Tasks", url: "/tasks", icon: Briefcase, badge: "12" },
   { title: "Paralegal Training", url: "/training", icon: GraduationCap, badge: "3" },
   { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap, badge: "3" },
   { title: "Service Bundles", url: "/services", icon: Package, badge: null },
@@ -136,14 +137,7 @@ export function AppSidebar() {
                       {!isCollapsed && (
                         <>
                           <span className="flex-1">{item.title}</span>
-                          {item.badge && (
-                            <Badge
-                              variant={isActive(item.url) ? "secondary" : "outline"}
-                              className="h-5 text-xs"
-                            >
-                              {item.badge}
-                            </Badge>
-                          )}
+                         
                         </>
                       )}
                     </NavLink>

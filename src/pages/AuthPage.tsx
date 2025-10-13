@@ -20,10 +20,6 @@ import { setAttorney } from "@/store/attorneySlice";
 import Cookies from "js-cookie";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
 
-
-
-
-
 interface LoginCredentials {
   email: string;
   password: string;
@@ -58,44 +54,53 @@ export default function AuthPage() {
     agreeToTerms: false
   });
 
-const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
-  try {
-    if (!credentialResponse.credential) {
-      throw new Error("Google authentication failed");
-    }
-
-    // Send the Google JWT token directly to backend
-    const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/google-login`,
-      {
-        credential: credentialResponse.credential
+  const handleGoogleAuth = async (credentialResponse: CredentialResponse) => {
+    try {
+      if (!credentialResponse.credential) {
+        throw new Error("Google authentication failed");
       }
-    );
-   const { email, fullName } = response.data.data;
-   Cookies.set('token', response.data.token, { expires: 7 }); 
 
-   
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/google-login`,
+        {
+          credential: credentialResponse.credential
+        }
+      );
 
+      if (response.data.success) {
+        const { email, fullName, token } = response.data.data;
+        
+        // FIXED: Proper cookie configuration for authentication
+        Cookies.set('token', response.data.token || token, {
+          expires: 7, // 7 days
+          path: '/',
+          secure: window.location.protocol === 'https:', // Only secure in production
+          sameSite: 'lax' // Changed from 'strict' to 'lax' for better compatibility
+        });
 
-    dispatch(setAttorney({ email, fullName: fullName }));
-    if (response.data.success) {
-      setSuccess("Google login successful! Redirecting...");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1200);
-    } else {
-      setError(response.data.message || "Google login failed");
+        // Debug log
+        console.log("✅ Token saved to cookie:", Cookies.get('token') ? 'SUCCESS' : 'FAILED');
+
+        dispatch(setAttorney({ email, fullName }));
+        
+        setSuccess("Google login successful! Redirecting...");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1200);
+      } else {
+        setError(response.data.message || "Google login failed");
+      }
+    } catch (err: any) {
+      console.error("Google login error:", err);
+      setError(err.response?.data?.message || err.message);
     }
-  } catch (err: any) {
-    console.error("Google login error:", err);
-    setError(err.response?.data?.message || err.message);
-  }
-};
-// At the top of your component
-useGoogleOneTapLogin({
-  onSuccess: handleGoogleAuth,
-  onError: () => setError("Google Login Failed")
-});
+  };
+
+  // Google One Tap Login
+  useGoogleOneTapLogin({
+    onSuccess: handleGoogleAuth,
+    onError: () => setError("Google Login Failed")
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,21 +114,34 @@ useGoogleOneTapLogin({
         loginData
       );
 
-         const { email, fullName } = response.data.data;
-   Cookies.set('token', response.data.token, { expires: 7 }); 
-
-   
-
-
-    dispatch(setAttorney({ email, fullName: fullName }));
-
       if (response.data.success) {
+        const { email, fullName, token } = response.data.data;
+        
+        // FIXED: Proper cookie configuration
+        const authToken = response.data.token || token;
+        
+        Cookies.set('token', authToken, {
+          expires: loginData.rememberMe ? 30 : 7, // 30 days if remember me, else 7 days
+          path: '/',
+          secure: window.location.protocol === 'https:',
+          sameSite: 'lax'
+        });
+
+        // Debug log
+        console.log("✅ Login successful - Token saved:", Cookies.get('token') ? 'SUCCESS' : 'FAILED');
+        console.log("🔍 Token preview:", authToken.substring(0, 20) + '...');
+
+        dispatch(setAttorney({ email, fullName }));
+        
         setSuccess("Login successful! Redirecting...");
-        setTimeout(() => (window.location.href = "/"), 1000);
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       } else {
         throw new Error(response.data.message || "Invalid credentials");
       }
     } catch (err: any) {
+      console.error("❌ Login error:", err);
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -318,7 +336,6 @@ useGoogleOneTapLogin({
                     <GoogleLogin
                       onSuccess={handleGoogleAuth}
                       onError={() => setError("Google Login Failed")}
-                     
                     />
                   </div>
 
@@ -328,7 +345,7 @@ useGoogleOneTapLogin({
                       onClick={() => setIsLogin(false)}
                       className="text-sm text-gray-600 hover:text-blue-600"
                     >
-                      Don’t have an account?{" "}
+                      Don't have an account?{" "}
                       <span className="font-semibold text-blue-600">
                         Sign Up
                       </span>
@@ -437,7 +454,6 @@ useGoogleOneTapLogin({
                     <GoogleLogin
                       onSuccess={handleGoogleAuth}
                       onError={() => setError("Google Login Failed")}
-                      
                     />
                   </div>
 

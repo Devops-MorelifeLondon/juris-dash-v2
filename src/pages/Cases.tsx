@@ -12,6 +12,50 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { Toaster, toast } from "sonner";
 
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+});
+
+// Add request interceptor with debugging
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get("token");
+    
+    // DEBUGGING: Log token retrieval
+    console.log("🔍 Interceptor - Token from cookie:", token ? "EXISTS" : "NOT FOUND");
+    console.log("🔍 All cookies:", document.cookie);
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("✅ Authorization header set:", config.headers.Authorization);
+    } else {
+      console.warn("⚠️ No token found in cookies");
+    }
+    
+    return config;
+  },
+  (error) => {
+    console.error("❌ Request interceptor error:", error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log("✅ Response received:", response.config.url);
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error("🚫 401 Unauthorized - Token may be invalid or missing");
+      console.log("Request headers:", error.config?.headers);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default function CaseManagementPage() {
   const [cases, setCases] = useState<Case[]>([]);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
@@ -29,11 +73,13 @@ export default function CaseManagementPage() {
     limit: 10,
   });
 
-  // Attach token to axios
+  // Debug: Check if token exists on component mount
   useEffect(() => {
     const token = Cookies.get("token");
-    if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("🚀 Component mounted - Token check:", token ? "FOUND" : "NOT FOUND");
+    if (!token) {
+      console.warn("⚠️ WARNING: No authentication token found!");
+      console.log("📝 Available cookies:", Object.keys(Cookies.get()));
     }
   }, []);
 
@@ -60,8 +106,10 @@ export default function CaseManagementPage() {
       params.append("page", filters.page.toString());
       params.append("limit", filters.limit.toString());
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cases/my-cases?${params.toString()}`
+      console.log("📡 Fetching cases with params:", params.toString());
+
+      const response = await api.get(
+        `/api/cases/my-cases?${params.toString()}`
       );
 
       const caseData = Array.isArray(response.data?.data)
@@ -75,9 +123,19 @@ export default function CaseManagementPage() {
       }
     } catch (err: any) {
       console.error("❌ Error fetching cases:", err);
+      console.error("❌ Error response:", err.response?.data);
+      console.error("❌ Error status:", err.response?.status);
+      
       setError(
         err.response?.data?.message || "Failed to fetch cases. Please try again."
       );
+      
+      // If 401, show specific token error
+      if (err.response?.status === 401) {
+        toast.error("Authentication failed", {
+          description: "Please login again to continue.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -103,9 +161,9 @@ export default function CaseManagementPage() {
       );
       setSelectedCase(updatedCase);
     }
-      toast.success("Case created successfully", {
-        description: `${caseToSave.name} has been added to your cases.`,
-      });
+    toast.success("Case created successfully", {
+      description: `${caseToSave.name} has been added to your cases.`,
+    });
 
     setView("details");
     setIsMobileMenuOpen(false);
@@ -126,7 +184,6 @@ export default function CaseManagementPage() {
     );
   });
 
-  // Prevent runtime crash if fields missing
   const safeArray = (arr: any) => (Array.isArray(arr) ? arr : []);
 
   const stats = {
