@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { LegalDashboard } from "@/components/dashboard/DashboardStats";
 import { useSelector } from "react-redux";
+import { TaskStats } from "@/components/dashboard/TaskStats";
 
 import { RootState } from "../store/store";
 
@@ -66,6 +67,8 @@ const Index = () => {
 
         {/* Key Statistics */}
         <LegalDashboard />
+         {/* ✅ ADD Task Statistics */}
+        <TaskStats />
 
         {/* Main Dashboard Grid */}
         <div className="grid gap-8 lg:grid-cols-2">

@@ -1,15 +1,15 @@
+// src/components/dashboard/ActiveCases.tsx
 import { useState } from "react";
 import { 
   MoreHorizontal, 
   Calendar, 
-  User, 
   Clock, 
-  AlertTriangle, 
-  CheckCircle2,
+  AlertTriangle,
   FileText,
   MessageCircle,
   Search,
-  Filter
+  Filter,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,53 +23,51 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useCases } from "@/hooks/useCases";
+import { Case } from "@/types/case.types";
+import { format, formatDistanceToNow } from "date-fns";
+import { caseService } from "@/lib/api/caseService";
+import { toast } from "sonner";
 
 interface CaseCardProps {
-  case: {
-    id: string;
-    name: string;
-    client: string;
-    paralegal: {
-      name: string;
-      avatar?: string;
-      status: "online" | "offline" | "busy";
-    };
-    status: "active" | "pending" | "review" | "completed";
-    priority: "high" | "medium" | "low";
-    deadline: string;
-    progress: number;
-    lastActivity: string;
-    tasksCount: number;
-    messagesCount: number;
-  };
+  case: Case;
+  onUpdate: () => void;
 }
 
-function CaseCard({ case: caseData }: CaseCardProps) {
+function CaseCard({ case: caseData, onUpdate }: CaseCardProps) {
+  const [updating, setUpdating] = useState(false);
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-info text-info-foreground";
-      case "pending": return "bg-warning text-warning-foreground";
-      case "review": return "bg-primary text-primary-foreground";
-      case "completed": return "bg-success text-success-foreground";
+      case "In Progress": return "bg-info text-info-foreground";
+      case "Pending": return "bg-warning text-warning-foreground";
+      case "Review": return "bg-primary text-primary-foreground";
+      case "Completed": return "bg-success text-success-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "text-destructive border-destructive/20";
-      case "medium": return "text-warning border-warning/20";
-      case "low": return "text-success border-success/20";
+      case "High": case "Critical": return "text-destructive border-destructive/20";
+      case "Medium": return "text-warning border-warning/20";
+      case "Low": return "text-success border-success/20";
       default: return "text-muted-foreground border-border";
     }
   };
 
-  const getParalegalStatus = (status: string) => {
-    switch (status) {
-      case "online": return "bg-success";
-      case "busy": return "bg-warning";
-      case "offline": return "bg-muted";
-      default: return "bg-muted";
+  const handleArchive = async () => {
+    if (!confirm('Are you sure you want to archive this case?')) return;
+    
+    try {
+      setUpdating(true);
+      await caseService.archiveCase(caseData._id);
+      toast.success('Case archived successfully');
+      onUpdate();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to archive case');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -81,20 +79,26 @@ function CaseCard({ case: caseData }: CaseCardProps) {
             <CardTitle className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
               {caseData.name}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{caseData.client}</p>
+            <p className="text-sm text-muted-foreground">{caseData.client.name}</p>
+            <p className="text-xs text-muted-foreground">{caseData.caseNumber}</p>
           </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={updating}>
+                {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Details</DropdownMenuItem>
-              <DropdownMenuItem>Assign Task</DropdownMenuItem>
-              <DropdownMenuItem>Send Message</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Archive Case</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = `/cases/${caseData._id}`}>
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = `/tasks?caseId=${caseData._id}`}>
+                View Tasks
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleArchive} className="text-destructive">
+                Archive Case
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -111,37 +115,32 @@ function CaseCard({ case: caseData }: CaseCardProps) {
 
       <CardContent className="space-y-4">
         {/* Paralegal Assignment */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
+        {caseData.paralegal && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={caseData.paralegal.avatar} />
                 <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                  {caseData.paralegal.name.split(' ').map(n => n[0]).join('')}
+                  {caseData.paralegal.fullName.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <div className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
-                getParalegalStatus(caseData.paralegal.status)
-              )} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">{caseData.paralegal.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{caseData.paralegal.status}</p>
+              <div>
+                <p className="text-sm font-medium text-foreground">{caseData.paralegal.fullName}</p>
+                <p className="text-xs text-muted-foreground">Assigned Paralegal</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium text-foreground">{caseData.progress}%</span>
+            <span className="text-muted-foreground">Hours Spent</span>
+            <span className="font-medium text-foreground">{caseData.actualHoursSpent}h</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
             <div 
               className="h-full bg-gradient-primary transition-all duration-500 ease-out"
-              style={{ width: `${caseData.progress}%` }}
+              style={{ width: `${Math.min((caseData.actualHoursSpent / (caseData.estimatedHours || caseData.actualHoursSpent || 1)) * 100, 100)}%` }}
             />
           </div>
         </div>
@@ -151,17 +150,13 @@ function CaseCard({ case: caseData }: CaseCardProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-muted-foreground">
               <FileText className="h-3 w-3" />
-              <span>{caseData.tasksCount}</span>
-            </div>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <MessageCircle className="h-3 w-3" />
-              <span>{caseData.messagesCount}</span>
+              <span>{caseData.serviceType}</span>
             </div>
           </div>
           
           <div className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span className="text-xs">{caseData.lastActivity}</span>
+            <span className="text-xs">{formatDistanceToNow(new Date(caseData.updatedAt), { addSuffix: true })}</span>
           </div>
         </div>
 
@@ -171,94 +166,27 @@ function CaseCard({ case: caseData }: CaseCardProps) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Deadline</span>
           </div>
-          <span className="text-sm font-medium text-foreground">{caseData.deadline}</span>
+          <span className="text-sm font-medium text-foreground">
+            {format(new Date(caseData.deadline), 'MMM dd, yyyy')}
+          </span>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-const mockCases = [
-  {
-    id: "1",
-    name: "Personal Injury - Johnson v. Tech Corp",
-    client: "Michael Johnson",
-    paralegal: {
-      name: "Sarah Chen",
-      avatar: "",
-      status: "online" as const
-    },
-    status: "active" as const,
-    priority: "high" as const,
-    deadline: "Jan 25, 2025",
-    progress: 75,
-    lastActivity: "2h ago",
-    tasksCount: 8,
-    messagesCount: 12
-  },
-  {
-    id: "2",
-    name: "Estate Planning - Williams Family Trust",
-    client: "Robert Williams",
-    paralegal: {
-      name: "David Kumar",
-      avatar: "",
-      status: "busy" as const
-    },
-    status: "review" as const,
-    priority: "medium" as const,
-    deadline: "Feb 2, 2025",
-    progress: 90,
-    lastActivity: "1h ago",
-    tasksCount: 5,
-    messagesCount: 8
-  },
-  {
-    id: "3",
-    name: "Real Estate - Commercial Property Sale",
-    client: "Metro Properties LLC",
-    paralegal: {
-      name: "Lisa Rodriguez",
-      avatar: "",
-      status: "online" as const
-    },
-    status: "pending" as const,
-    priority: "high" as const,
-    deadline: "Jan 30, 2025",
-    progress: 45,
-    lastActivity: "30m ago",
-    tasksCount: 12,
-    messagesCount: 6
-  },
-  {
-    id: "4",
-    name: "Family Law - Custody Agreement",
-    client: "Jennifer Davis",
-    paralegal: {
-      name: "Mark Thompson",
-      avatar: "",
-      status: "offline" as const
-    },
-    status: "active" as const,
-    priority: "medium" as const,
-    deadline: "Feb 5, 2025",
-    progress: 60,
-    lastActivity: "4h ago",
-    tasksCount: 6,
-    messagesCount: 15
-  }
-];
-
 export function ActiveCases() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const filteredCases = mockCases.filter(caseData => {
-    const matchesSearch = caseData.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         caseData.client.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || caseData.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  
+  const { cases, loading, error, refetch } = useCases({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    search: searchQuery || undefined,
   });
+
+  const filteredCases = cases.filter(caseData => 
+    statusFilter === "all" || caseData.status === statusFilter
+  );
 
   return (
     <Card className="bg-gradient-card shadow-card">
@@ -289,9 +217,9 @@ export function ActiveCases() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={() => setStatusFilter("all")}>All Cases</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("active")}>Active</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("review")}>In Review</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("In Progress")}>In Progress</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("Pending")}>Pending</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("Review")}>In Review</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -299,24 +227,43 @@ export function ActiveCases() {
       </CardHeader>
 
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-          {filteredCases.map((caseData, index) => (
-            <div
-              key={caseData.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <CaseCard case={caseData} />
-            </div>
-          ))}
-        </div>
-        
-        {filteredCases.length === 0 && (
-          <div className="text-center py-12">
-            <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No cases found</h3>
-            <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        )}
+
+        {error && (
+          <div className="text-center py-12">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Error loading cases</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={refetch}>Retry</Button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+              {filteredCases.map((caseData, index) => (
+                <div
+                  key={caseData._id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CaseCard case={caseData} onUpdate={refetch} />
+                </div>
+              ))}
+            </div>
+            
+            {filteredCases.length === 0 && (
+              <div className="text-center py-12">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No cases found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
