@@ -29,7 +29,7 @@ export interface Task {
   title: string;
   description: string;
   case: string | null;
-  assignedTo: string | null;
+  assignedTo: {firstName: string, lastName: string, email: string} | null;
 
   type: 'Research' | 'Document Preparation' | 'Client Communication' | 'Court Filing' | 'Review' | 'Other';
   status: 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';

@@ -16,53 +16,41 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, X, Save, XCircle } from "lucide-react";
+import { Plus, X, Save, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import Cookies from "js-cookie";
-// Create axios instance with base configuration
+import { cn } from "@/lib/utils"; // For combining class names
+
+// Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
-// Add request interceptor with debugging
+// Axios interceptors
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get("token");
-    
-    // DEBUGGING: Log token retrieval
-    console.log("🔍 Interceptor - Token from cookie:", token ? "EXISTS" : "NOT FOUND");
-    console.log("🔍 All cookies:", document.cookie);
-    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("✅ Authorization header set:", config.headers.Authorization);
-    } else {
-      console.warn("⚠️ No token found in cookies");
     }
-    
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
-    console.error("❌ Request interceptor error:", error);
+    if (error.response?.status === 401) {
+      console.error("🚫 401 Unauthorized");
+    }
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor for debugging
-api.interceptors.response.use(
-  (response) => {
-    console.log("✅ Response received:", response.config.url);
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error("🚫 401 Unauthorized - Token may be invalid or missing");
-      console.log("Request headers:", error.config?.headers);
-    }
-    return Promise.reject(error);
-  }
-);
+// Types
+type Availability = 'Available Now' | 'Available Soon' | 'Fully Booked' | 'Not Available';
 
 interface TaskFormProps {
   taskData: Task | null;
@@ -80,7 +68,29 @@ interface Case {
 interface Paralegal {
   _id: string;
   fullName: string;
+  available: Availability;
 }
+
+// Badge Component for Availability
+const AvailabilityBadge = ({ status }: { status: Availability }) => {
+  const badgeStyles = {
+    'Available Now': "bg-green-100 text-green-800 border-green-200",
+    'Available Soon': "bg-yellow-100 text-yellow-800 border-yellow-200",
+    'Fully Booked': "bg-red-100 text-red-800 border-red-200",
+    'Not Available': "bg-gray-100 text-gray-800 border-gray-200",
+  };
+
+  return (
+    <span
+      className={cn(
+        "ml-2 px-2 py-0.5 text-xs font-medium rounded-full border",
+        badgeStyles[status] || "bg-gray-100 text-gray-800"
+      )}
+    >
+      {status}
+    </span>
+  );
+};
 
 export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) {
   const [formData, setFormData] = useState<TaskFormData>({
@@ -101,39 +111,44 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
   const [newTag, setNewTag] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cases, setCases] = useState<Case[]>([]);
-  const [paralegals] = useState<Paralegal[]>([
-    { _id: "demo1", fullName: "John Doe" },
-    { _id: "demo2", fullName: "Jane Smith" },
-    { _id: "demo3", fullName: "Mike Johnson" },
-    { _id: "demo4", fullName: "Sarah Wilson" },
-    { _id: "demo5", fullName: "David Brown" },
-    { _id: "demo6", fullName: "Emily Davis" },
-  ]);
+  const [paralegals, setParalegals] = useState<Paralegal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCases = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const params = new URLSearchParams({
-          page: "1",
-          limit: "100", // Fetch enough to cover all active cases
-        });
-        const response = await api.get(`/api/cases/my-cases?${params.toString()}`);
-        if (response.data.success) {
-          // Filter for active cases: exclude Completed, Cancelled, Declined
-          const activeCases = response.data.data.filter(
+        const casesParams = new URLSearchParams({ page: "1", limit: "100" });
+        const [casesResponse, paralegalsResponse] = await Promise.all([
+          api.get(`/api/cases/my-cases?${casesParams.toString()}`),
+          api.get(`/api/paralegals`),
+        ]);
+
+        if (casesResponse.data.success) {
+          setCases(casesResponse.data.data.filter(
             (c: Case) => !["Completed", "Cancelled", "Declined"].includes(c.status)
-          );
-          setCases(activeCases);
+          ));
         } else {
           toast.error("Failed to fetch cases");
         }
+
+        if (paralegalsResponse.data.success) {
+          setParalegals(paralegalsResponse.data.data.map((p: any) => ({
+            _id: p._id,
+            fullName: `${p.firstName} ${p.lastName}`,
+            available: p.availability,
+          })));
+        } else {
+          toast.error("Failed to fetch paralegals");
+        }
       } catch (error) {
-        console.error("Error fetching cases:", error);
-        toast.error("Failed to fetch cases");
+        console.error("Error fetching initial data:", error);
+        toast.error("Failed to fetch necessary data.");
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    fetchCases();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -142,15 +157,12 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
         title: taskData.title,
         description: taskData.description,
         case: taskData.case?._id || null,
-        assignedTo: taskData.demoAssignedTo || taskData.assignedTo?.fullName || null, // Prioritize demo field
+        assignedTo: taskData.assignedTo?._id || null,
         type: taskData.type,
         priority: taskData.priority,
         dueDate: taskData.dueDate.split("T")[0],
         estimatedHours: taskData.estimatedHours,
-        checklistItems: taskData.checklistItems.map((item) => ({
-          text: item.text,
-          completed: item.completed,
-        })),
+        checklistItems: taskData.checklistItems,
         notes: taskData.notes || "",
         tags: taskData.tags,
       });
@@ -159,42 +171,24 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    }
-
-    if (!formData.type) {
-      newErrors.type = "Type is required";
-    }
-
-    if (!formData.dueDate) {
-      newErrors.dueDate = "Due date is required";
-    }
-
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.description.trim()) newErrors.description = "Description is required";
+    if (!formData.type) newErrors.type = "Type is required";
+    if (!formData.dueDate) newErrors.dueDate = "Due date is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       toast.error("Please fill in all required fields");
       return;
     }
-
-    const cleanData = { ...formData };
-    if (cleanData.case === '') cleanData.case = null;
-    if (cleanData.assignedTo === '') cleanData.assignedTo = null;
-    onSave(cleanData);
+    onSave({ ...formData, case: formData.case || null, assignedTo: formData.assignedTo || null });
   };
-
-  const addChecklistItem = () => {
+  
+    const addChecklistItem = () => {
     if (newChecklistItem.trim()) {
       setFormData({
         ...formData,
@@ -231,94 +225,78 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
     });
   };
 
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading form...</p>
+      </div>
+    );
+  }
+
   return (
     <Card className="h-full">
       <form onSubmit={handleSubmit}>
         <CardHeader>
           <CardTitle>{taskData ? "Edit Task" : "Create New Task"}</CardTitle>
         </CardHeader>
-
         <ScrollArea className="h-[calc(100vh-280px)]">
-          <CardContent className="space-y-4">
-            {/* Title */}
+          <CardContent className="space-y-4 pt-4">
+            {/* Form fields */}
             <div className="space-y-2">
               <Label htmlFor="title">
                 Title <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter task title"
-                className={errors.title ? "border-red-500" : ""}
-              />
+              <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Enter task title" className={errors.title ? "border-red-500" : ""} aria-required="true" />
               {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">
                 Description <span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter task description"
-                rows={4}
-                className={errors.description ? "border-red-500" : ""}
-              />
+              <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter task description" rows={4} className={errors.description ? "border-red-500" : ""} aria-required="true" />
               {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
             </div>
 
-            {/* Case Selection */}
             <div className="space-y-2">
               <Label htmlFor="case">Case</Label>
-              <Select
-                value={formData.case || ""}
-                onValueChange={(value) => setFormData({ ...formData, case: value || null })}
-              >
-                <SelectTrigger id="case">
-                  <SelectValue placeholder="Select a case" />
-                </SelectTrigger>
+              <Select value={formData.case || ""} onValueChange={(value) => setFormData({ ...formData, case: value || null })}>
+                <SelectTrigger id="case"><SelectValue placeholder="Select a case" /></SelectTrigger>
                 <SelectContent>
                   {cases.map((caseItem) => (
-                    <SelectItem key={caseItem._id} value={caseItem._id}>
-                      {caseItem.name} - {caseItem.caseNumber} ({caseItem.status})
-                    </SelectItem>
+                    <SelectItem key={caseItem._id} value={caseItem._id}>{caseItem.name} - {caseItem.caseNumber}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Assigned To (Paralegal) */}
+            
             <div className="space-y-2">
-              <Label htmlFor="assignedTo">Assigned To (Paralegal)</Label>
-              <Select
-                value={formData.assignedTo || ""}
-                onValueChange={(value) => setFormData({ ...formData, assignedTo: value || null })}
-              >
-                <SelectTrigger id="assignedTo">
-                  <SelectValue placeholder="Select a paralegal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paralegals.map((paralegal) => (
-                    <SelectItem key={paralegal._id} value={paralegal.fullName}>
-                      {paralegal.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Label htmlFor="assignedTo">Assigned To (Paralegal)</Label>
+                <Select value={formData.assignedTo || ""} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || null })}>
+                    <SelectTrigger id="assignedTo"><SelectValue placeholder="Select a paralegal" /></SelectTrigger>
+                    <SelectContent>
+                        {paralegals.map((paralegal) => (
+                            <SelectItem key={paralegal._id} value={paralegal._id} className="w-full">
+                                <div className="flex items-center justify-between w-full">
+                                    <span>{paralegal.fullName}</span>
+                                    <AvailabilityBadge status={paralegal.available} />
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
-            {/* Type and Priority */}
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+                {/* Type and Priority Selects */}
+                 <div className="space-y-2">
                 <Label htmlFor="type">
                   Type <span className="text-red-500">*</span>
                 </Label>
                 <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger id="type">
+                  <SelectTrigger id="type" aria-required="true">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -349,9 +327,9 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
               </div>
             </div>
 
-            {/* Due Date and Estimated Hours */}
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+                {/* Due Date and Estimated Hours */}
+                <div className="space-y-2">
                 <Label htmlFor="dueDate">
                   Due Date <span className="text-red-500">*</span>
                 </Label>
@@ -361,6 +339,7 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                   className={errors.dueDate ? "border-red-500" : ""}
+                  aria-required="true"
                 />
                 {errors.dueDate && <p className="text-xs text-red-500">{errors.dueDate}</p>}
               </div>
@@ -383,9 +362,9 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
                 />
               </div>
             </div>
-
+            
             {/* Checklist */}
-            <div className="space-y-2">
+             <div className="space-y-2">
               <Label>Checklist Items</Label>
               <div className="flex gap-2">
                 <Input
@@ -409,6 +388,7 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
                         variant="ghost"
                         size="sm"
                         onClick={() => removeChecklistItem(index)}
+                        aria-label={`Remove item: ${item.text}`}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -440,7 +420,7 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
                       className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded text-sm"
                     >
                       <span>{tag}</span>
-                      <button type="button" onClick={() => removeTag(index)}>
+                      <button type="button" onClick={() => removeTag(index)} aria-label={`Remove tag: ${tag}`}>
                         <X className="h-3 w-3" />
                       </button>
                     </div>
@@ -448,32 +428,23 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
                 </div>
               )}
             </div>
-
+            
             {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Additional notes..."
-                rows={3}
-              />
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional notes..." rows={3} />
             </div>
+
           </CardContent>
         </ScrollArea>
-
         <CardFooter className="flex gap-2 justify-end border-t pt-6">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            <XCircle className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button type="submit">
-            <Save className="h-4 w-4 mr-2" />
-            {taskData ? "Update Task" : "Create Task"}
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}><XCircle className="h-4 w-4 mr-2" />Cancel</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}{taskData ? "Update Task" : "Create Task"}
           </Button>
         </CardFooter>
       </form>
     </Card>
   );
 }
+

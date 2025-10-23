@@ -44,7 +44,7 @@ export default function TaskList({
       case "High":
         return "bg-orange-500 text-white border-orange-500";
       case "Medium":
-        return "bg-yellow-500 text-black border-yellow-500";
+        return "bg-yellow-400 text-black border-yellow-500";
       case "Low":
         return "bg-green-500 text-white border-green-500";
       default:
@@ -218,7 +218,7 @@ export default function TaskList({
                       {task.assignedTo && (
                         <div className="flex items-center gap-1.5">
                           <User className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate max-w-[120px]">{task.assignedTo.fullName}</span>
+                          <span className="truncate max-w-[120px]">{task.assignedTo.firstName}</span>
                         </div>
                       )}
                     </div>

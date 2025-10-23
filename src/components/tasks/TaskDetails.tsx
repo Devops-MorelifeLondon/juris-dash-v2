@@ -54,7 +54,7 @@ export default function TaskDetails({ task, onEdit, onDelete, onUpdate }: TaskDe
       case "High":
         return "bg-orange-500 text-white";
       case "Medium":
-        return "bg-yellow-500 text-black";
+        return "bg-yellow-400 text-black";
       case "Low":
         return "bg-green-500 text-white";
       default:
@@ -107,12 +107,15 @@ export default function TaskDetails({ task, onEdit, onDelete, onUpdate }: TaskDe
 
   // Helper to get assigned to display name
   const getAssignedToName = () => {
-    if (task.demoAssignedTo) return task.demoAssignedTo;
-    if (task.assignedTo?.fullName) return task.assignedTo.fullName;
+    if (task.assignedTo) return task.assignedTo.firstName + " " + task.assignedTo.lastName;
+  
     return "Unassigned";
   };
+  function hasAssignedTo(){
+    return task.assignedTo !== null;
+  }
 
-  const hasAssignedTo = task.demoAssignedTo || task.assignedTo;
+
 
   return (
     <Card className="h-full">
