@@ -1,6 +1,7 @@
 // services/caseService.ts
 import axios, { AxiosError } from 'axios';
 import { Case, CaseFormData, ApiResponse, PaginatedResponse } from '../components/cases/types';
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = process.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
 
@@ -18,7 +19,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -38,8 +39,9 @@ apiClient.interceptors.response.use(
         case 401:
           // Unauthorized - redirect to login
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+         
+            Cookies.remove('token');
+            window.location.href = '/auth';
           }
           break;
         case 403:

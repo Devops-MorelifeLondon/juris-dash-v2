@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux";
 import { setAttorney } from "@/store/attorneySlice";
 import Cookies from "js-cookie";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
+import { apiClient } from "@/lib/api/config";
 
 interface LoginCredentials {
   email: string;
@@ -60,8 +61,8 @@ export default function AuthPage() {
         throw new Error("Google authentication failed");
       }
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/google-login`,
+      const response = await apiClient.post(
+        `/api/attorney/auth/google-login`,
         {
           credential: credentialResponse.credential
         }
@@ -74,7 +75,7 @@ export default function AuthPage() {
         Cookies.set('token', response.data.token || token, {
           expires: 7, // 7 days
           path: '/',
-          secure: window.location.protocol === 'https:', // Only secure in production
+          secure: false, // Only secure in production
           sameSite: 'lax' // Changed from 'strict' to 'lax' for better compatibility
         });
 
@@ -109,8 +110,8 @@ export default function AuthPage() {
     setSuccess(null);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/login`,
+      const response = await apiClient.post(
+        `/api/attorney/auth/login`,
         loginData
       );
 
@@ -123,7 +124,7 @@ export default function AuthPage() {
         Cookies.set('token', authToken, {
           expires: loginData.rememberMe ? 30 : 7, // 30 days if remember me, else 7 days
           path: '/',
-          secure: window.location.protocol === 'https:',
+          secure: false,
           sameSite: 'lax'
         });
 
@@ -160,8 +161,8 @@ export default function AuthPage() {
       if (!registerData.agreeToTerms)
         throw new Error("Please agree to the Terms & Conditions");
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/attorney/auth/register`,
+      const response = await apiClient.post(
+        `/api/attorney/auth/register`,
         registerData
       );
 

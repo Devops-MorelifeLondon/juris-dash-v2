@@ -22,7 +22,6 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
 );
 
 // Response interceptor - Handle errors globally
@@ -30,9 +29,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      if (!currentPath.startsWith('/auth')) {
+        Cookies.remove('token');
+        window.location.href = '/auth';
+      }
     }
     return Promise.reject(error);
   }
 );
+
