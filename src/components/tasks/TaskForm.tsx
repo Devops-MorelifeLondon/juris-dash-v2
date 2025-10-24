@@ -18,36 +18,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, X, Save, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
+
 import Cookies from "js-cookie";
 import { cn } from "@/lib/utils"; // For combining class names
+import { apiClient } from "@/lib/api/config";
 
-// Create axios instance
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-});
 
-// Axios interceptors
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error("🚫 401 Unauthorized");
-    }
-    return Promise.reject(error);
-  }
-);
 
 // Types
 type Availability = 'Available Now' | 'Available Soon' | 'Fully Booked' | 'Not Available';
@@ -96,8 +72,6 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     description: "",
-    case: null,
-    assignedTo: null,
     type: "Research",
     priority: "Medium",
     dueDate: "",
@@ -120,8 +94,8 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
       try {
         const casesParams = new URLSearchParams({ page: "1", limit: "100" });
         const [casesResponse, paralegalsResponse] = await Promise.all([
-          api.get(`/api/cases/my-cases?${casesParams.toString()}`),
-          api.get(`/api/paralegals`),
+          apiClient.get(`/api/cases/my-cases?${casesParams.toString()}`),
+          apiClient.get(`/api/paralegals`),
         ]);
 
         if (casesResponse.data.success) {
@@ -156,8 +130,6 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
       setFormData({
         title: taskData.title,
         description: taskData.description,
-        case: taskData.case?._id || null,
-        assignedTo: taskData.assignedTo?._id || null,
         type: taskData.type,
         priority: taskData.priority,
         dueDate: taskData.dueDate.split("T")[0],
@@ -260,34 +232,9 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
               {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="case">Case</Label>
-              <Select value={formData.case || ""} onValueChange={(value) => setFormData({ ...formData, case: value || null })}>
-                <SelectTrigger id="case"><SelectValue placeholder="Select a case" /></SelectTrigger>
-                <SelectContent>
-                  {cases.map((caseItem) => (
-                    <SelectItem key={caseItem._id} value={caseItem._id}>{caseItem.name} - {caseItem.caseNumber}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+     
             
-            <div className="space-y-2">
-                <Label htmlFor="assignedTo">Assigned To (Paralegal)</Label>
-                <Select value={formData.assignedTo || ""} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || null })}>
-                    <SelectTrigger id="assignedTo"><SelectValue placeholder="Select a paralegal" /></SelectTrigger>
-                    <SelectContent>
-                        {paralegals.map((paralegal) => (
-                            <SelectItem key={paralegal._id} value={paralegal._id} className="w-full">
-                                <div className="flex items-center justify-between w-full">
-                                    <span>{paralegal.fullName}</span>
-                                    <AvailabilityBadge status={paralegal.available} />
-                                </div>
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+          
 
             <div className="grid md:grid-cols-2 gap-4">
                 {/* Type and Priority Selects */}

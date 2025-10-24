@@ -11,50 +11,11 @@ import { FileText, Users, Clock, AlertCircle, Menu, X } from "lucide-react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { Toaster, toast } from "sonner";
+import { apiClient } from "@/lib/api/config";
 
-// Create axios instance with base configuration
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-});
 
-// Add request interceptor with debugging
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    
-    // DEBUGGING: Log token retrieval
-    console.log("🔍 Interceptor - Token from cookie:", token ? "EXISTS" : "NOT FOUND");
-    console.log("🔍 All cookies:", document.cookie);
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("✅ Authorization header set:", config.headers.Authorization);
-    } else {
-      console.warn("⚠️ No token found in cookies");
-    }
-    
-    return config;
-  },
-  (error) => {
-    console.error("❌ Request interceptor error:", error);
-    return Promise.reject(error);
-  }
-);
 
-// Add response interceptor for debugging
-api.interceptors.response.use(
-  (response) => {
-    console.log("✅ Response received:", response.config.url);
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error("🚫 401 Unauthorized - Token may be invalid or missing");
-      console.log("Request headers:", error.config?.headers);
-    }
-    return Promise.reject(error);
-  }
-);
+
 
 export default function CaseManagementPage() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -108,7 +69,7 @@ export default function CaseManagementPage() {
 
       console.log("📡 Fetching cases with params:", params.toString());
 
-      const response = await api.get(
+      const response = await apiClient.get(
         `/api/cases/my-cases?${params.toString()}`
       );
 

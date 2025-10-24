@@ -41,6 +41,7 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const dispatch = useDispatch();
+  const isProd = import.meta.env.VITE_PRODUCTION;
 
   const [loginData, setLoginData] = useState<LoginCredentials>({
     email: "",
@@ -71,11 +72,12 @@ export default function AuthPage() {
       if (response.data.success) {
         const { email, fullName, token } = response.data.data;
         
+        
         // FIXED: Proper cookie configuration for authentication
         Cookies.set('token', response.data.token || token, {
           expires: 7, // 7 days
           path: '/',
-          secure: false, // Only secure in production
+          secure: isProd, // Only secure in production
           sameSite: 'lax' // Changed from 'strict' to 'lax' for better compatibility
         });
 
@@ -124,7 +126,7 @@ export default function AuthPage() {
         Cookies.set('token', authToken, {
           expires: loginData.rememberMe ? 30 : 7, // 30 days if remember me, else 7 days
           path: '/',
-          secure: false,
+          secure: isProd,
           sameSite: 'lax'
         });
 

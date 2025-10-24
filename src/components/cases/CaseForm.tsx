@@ -1,5 +1,3 @@
-// @/components/cases/CaseForm.tsx
-
 import React, { useState, useEffect } from "react";
 import { Case } from "./types";
 import { Button } from "@/components/ui/button";
@@ -15,8 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X, Save } from "lucide-react";
-import axios from "axios";
-import Cookies from "js-cookie";
+import { apiClient } from "@/lib/api/config";
 
 interface CaseFormProps {
   caseData: Case | null;
@@ -34,6 +31,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       phone: "",
     },
     serviceType: "Immigration Services",
+    otherServiceTypeDescription: "",
     status: "New",
     priority: "Medium",
     deadline: "",
@@ -54,6 +52,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
         deadline: caseData.deadline
           ? new Date(caseData.deadline).toISOString().split("T")[0]
           : "",
+        otherServiceTypeDescription: caseData.otherServiceTypeDescription || "",
       });
     }
   }, [caseData]);
@@ -67,7 +66,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
 
   const handleClientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
       client: {
         ...(prev.client || {}),
@@ -86,8 +85,6 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
     setError(null);
 
     try {
-      const token = Cookies.get("token");
-
       const payload = {
         ...formData,
         budget: Number(formData.budget) || 0,
@@ -98,22 +95,16 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
 
       if (caseData?._id) {
         // Update existing case
-        const response = await axios.put(
+        const response = await apiClient.put(
           `${import.meta.env.VITE_BACKEND_URL}/api/cases/${caseData._id}`,
-          payload,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          payload
         );
         onSave(response.data.data);
       } else {
         // Create new case
-        const response = await axios.post(
+        const response = await apiClient.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/cases`,
-          payload,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          payload
         );
         onSave(response.data.data);
       }
@@ -179,7 +170,6 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
                 value={formData.serviceType}
                 onValueChange={(value) => handleSelectChange("serviceType", value)}
               >
-
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -188,17 +178,34 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
                   <SelectItem value="Personal Injury">Personal Injury</SelectItem>
                   <SelectItem value="Real Estate">Real Estate</SelectItem>
                   <SelectItem value="Estate Planning">Estate Planning</SelectItem>
-                  <SelectItem value="Intellectual Property">Intellectual Property</SelectItem>
+                  <SelectItem value="Intellectual Property">
+                    Intellectual Property
+                  </SelectItem>
                   <SelectItem value="Business Law">Business Law</SelectItem>
-                  <SelectItem value="Immigration Services">Immigration Services</SelectItem>
+                  <SelectItem value="Immigration Services">
+                    Immigration Services
+                  </SelectItem>
                   <SelectItem value="Bankruptcy">Bankruptcy</SelectItem>
                   <SelectItem value="Criminal Law">Criminal Law</SelectItem>
                   <SelectItem value="Tax Law">Tax Law</SelectItem>
                   <SelectItem value="Employment Law">Employment Law</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
-
               </Select>
+              {formData.serviceType === "Other" && (
+                <div className="mt-2">
+                  <Label htmlFor="otherServiceTypeDescription">
+                    Specify Other Service Type *
+                  </Label>
+                  <Input
+                    id="otherServiceTypeDescription"
+                    name="otherServiceTypeDescription"
+                    value={formData.otherServiceTypeDescription || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="deadline">Deadline</Label>

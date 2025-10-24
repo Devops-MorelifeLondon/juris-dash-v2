@@ -106,14 +106,14 @@ export default function TaskDetails({ task, onEdit, onDelete, onUpdate }: TaskDe
     totalChecklist > 0 ? Math.round((completedChecklist / totalChecklist) * 100) : 0;
 
   // Helper to get assigned to display name
-  const getAssignedToName = () => {
-    if (task.assignedTo) return task.assignedTo.firstName + " " + task.assignedTo.lastName;
+  // const getAssignedToName = () => {
+  //   if (task.assignedTo) return task.assignedTo.firstName + " " + task.assignedTo.lastName;
   
-    return "Unassigned";
-  };
-  function hasAssignedTo(){
-    return task.assignedTo !== null;
-  }
+  //   return "Pending";
+  // };
+  // function hasAssignedTo(){
+  //   return task.assignedTo !== null;
+  // }
 
 
 
@@ -192,7 +192,7 @@ export default function TaskDetails({ task, onEdit, onDelete, onUpdate }: TaskDe
           </div>
 
           {/* Assigned To */}
-          {hasAssignedTo && (
+          {/* {hasAssignedTo && (
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Assigned To</p>
               <p className="text-sm flex items-center gap-2">
@@ -200,7 +200,7 @@ export default function TaskDetails({ task, onEdit, onDelete, onUpdate }: TaskDe
                 {getAssignedToName()}
               </p>
             </div>
-          )}
+          )} */}
 
           {/* Estimated Hours */}
           {task.estimatedHours && (

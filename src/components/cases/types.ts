@@ -45,6 +45,7 @@ export interface Case {
   paralegal?: Paralegal | string;
   assignmentDetails?: AssignmentDetails;
   serviceType: string;
+  otherServiceTypeDescription?: string;
   status: string;
   priority: string;
   deadline?: Date | string;

@@ -21,18 +21,9 @@ import {
 import axios from "axios";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api/config";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-});
 
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 export default function TaskManagementPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -65,7 +56,7 @@ export default function TaskManagementPage() {
       params.append("page", filters.page.toString());
       params.append("limit", filters.limit.toString());
 
-      const response = await api.get(`/api/tasks?${params.toString()}`);
+      const response = await apiClient.get(`/api/tasks?${params.toString()}`);
       const taskData = Array.isArray(response.data?.data) ? response.data.data : [];
 
       setTasks(taskData);
@@ -92,12 +83,12 @@ export default function TaskManagementPage() {
   const handleSave = async (taskData: any) => {
     try {
       if (view === "new") {
-        const response = await api.post("/api/tasks", taskData);
+        const response = await apiClient.post("/api/tasks", taskData);
         toast.success("Task created successfully");
         setTasks([response.data.data, ...tasks]);
         setSelectedTask(response.data.data);
       } else if (selectedTask) {
-        const response = await api.put(`/api/tasks/${selectedTask._id}`, taskData);
+        const response = await apiClient.put(`/api/tasks/${selectedTask._id}`, taskData);
         toast.success("Task updated successfully");
         setTasks((prev) =>
           prev.map((t) => (t._id === response.data.data._id ? response.data.data : t))
@@ -116,7 +107,7 @@ export default function TaskManagementPage() {
     if (!confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      await api.delete(`/api/tasks/${taskId}`);
+      await apiClient.delete(`/api/tasks/${taskId}`);
       toast.success("Task deleted successfully");
       setTasks((prev) => prev.filter((t) => t._id !== taskId));
       setSelectedTask(tasks.length > 1 ? tasks[0] : null);

@@ -136,6 +136,12 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({
             <div className="text-sm font-medium text-muted-foreground">Service Type</div>
             <div className="text-base">{caseData.serviceType}</div>
           </div>
+          {caseData.serviceType == 'Other' && 
+           <div>
+            <div className="text-sm font-medium text-muted-foreground">Description of Service</div>
+            <div className="text-base">{caseData.otherServiceTypeDescription}</div>
+          </div>
+          }
           <div>
             <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
               <Calendar className="h-3 w-3" />
