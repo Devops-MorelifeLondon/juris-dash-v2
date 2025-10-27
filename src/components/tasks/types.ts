@@ -28,7 +28,8 @@ export interface Task {
   _id: string;
   title: string;
   description: string;
- assignedBy: string;
+ assignedBy: {fullName: string, email: string};
+ assignedTo?: {fullName: string, email: string};
 
   type: 'Research' | 'Document Preparation' | 'Client Communication' | 'Court Filing' | 'Review' | 'Other';
   status: 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';

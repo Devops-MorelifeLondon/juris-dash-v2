@@ -84,9 +84,39 @@ export default function TaskManagementPage() {
     try {
       if (view === "new") {
         const response = await apiClient.post("/api/tasks", taskData);
-        toast.success("Task created successfully");
-        setTasks([response.data.data, ...tasks]);
-        setSelectedTask(response.data.data);
+
+        if (response.data?.data) {
+          const apiTask = response.data.data;
+          console.log("API DATA TASK : ", apiTask);
+
+          // Map API response to match Task interface
+          const newTask: Task = {
+            _id: apiTask._id,
+            title: apiTask.title,
+            description: apiTask.description,
+            assignedBy: apiTask.assignedBy || apiTask.assignedBy._id, // choose what you want stored
+            type: apiTask.type,
+            status: apiTask.status === "Not Started" ? "Pending" : apiTask.status, // optional normalization
+            priority: apiTask.priority,
+            dueDate: apiTask.dueDate,
+            startDate: apiTask.startDate,
+            completedDate: apiTask.completedDate,
+            estimatedHours: apiTask.estimatedHours,
+            actualHoursSpent: apiTask.actualHoursSpent,
+            checklistItems: apiTask.checklistItems || [],
+            notes: apiTask.notes,
+            tags: apiTask.tags || [],
+            createdAt: apiTask.createdAt,
+            updatedAt: apiTask.updatedAt,
+          };
+
+          console.log("Mapped Task:", newTask);
+          toast.success("Task created successfully");
+
+          // Add to state
+          setTasks([newTask, ...tasks]);
+          setSelectedTask(newTask);
+        }
       } else if (selectedTask) {
         const response = await apiClient.put(`/api/tasks/${selectedTask._id}`, taskData);
         toast.success("Task updated successfully");
