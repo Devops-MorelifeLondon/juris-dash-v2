@@ -40,7 +40,7 @@ function StatCard({ title, value, change, trend, icon: Icon, description, classN
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
-          <div className="text-2xl font-bold text-foreground animate-scale-in">
+          <div className="text-xl font-bold text-foreground animate-scale-in">
             {value}
           </div>
           <Badge
@@ -108,7 +108,7 @@ export function LegalDashboard() {
     },
     { 
       title: "Completion Rate", 
-      value: `${completedPercentage}%`, 
+      value: `${Number.isNaN(completedPercentage) ? "Not Applicable" : completedPercentage}`, 
       change: "+5%", 
       trend: "up" as const, 
       icon: CheckCircle2, 

@@ -30,6 +30,7 @@ export interface Task {
   description: string;
  assignedBy: {fullName: string, email: string};
  assignedTo?: {fullName: string, email: string};
+ domain?: string;
 
   type: 'Research' | 'Document Preparation' | 'Client Communication' | 'Court Filing' | 'Review' | 'Other';
   status: 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';

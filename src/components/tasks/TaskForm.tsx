@@ -157,7 +157,7 @@ export default function TaskForm({ taskData, onSave, onCancel }: TaskFormProps) 
       toast.error("Please fill in all required fields");
       return;
     }
-    onSave({ ...formData, case: formData.case || null, assignedTo: formData.assignedTo || null });
+    onSave({ ...formData, case: formData.case || null, assignedTo: formData.assignedTo || null, domain: 'Family Law' });
   };
   
     const addChecklistItem = () => {
