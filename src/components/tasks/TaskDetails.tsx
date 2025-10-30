@@ -29,6 +29,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api/config";
+import { Link } from "react-router-dom";
 
 interface TaskDetailsProps {
   task: Task;
@@ -163,6 +164,9 @@ export default function TaskDetails({
                   <AlertCircle className="h-3 w-3 mr-1" /> Overdue
                 </Badge>
               )}
+            <Link to={`/task/${task._id}`}>
+              View
+            </Link>
             </div>
           </div>
 

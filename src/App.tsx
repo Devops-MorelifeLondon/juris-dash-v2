@@ -17,6 +17,7 @@ import AuthPage from "./pages/AuthPage";
 import { SectionTrain } from "./pages/Training";
 import { Toaster, toast } from "sonner";
 import TaskManagementPage from "./pages/TaskManagementPage";
+import SingleTaskPage from "./pages/SingleTaskManagement";
 
 
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/cases" element={<Cases />} />
           <Route path="/tasks" element={<TaskManagementPage />} />
+          <Route path="/task/:taskId" element={<SingleTaskPage />} />
           <Route path="/training" element={<SectionTrain />} />
           <Route path="/services" element={<Services />} />
           <Route path="/compliance" element={<Compliance />} />

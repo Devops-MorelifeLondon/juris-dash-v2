@@ -35,15 +35,15 @@ import { persistor } from "@/store/store";
 import { apiClient } from "@/lib/api/config";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, badge: null },
-  { title: "Cases", url: "/cases", icon: Briefcase, badge: "12" },
-  { title: "Tasks", url: "/tasks", icon: Briefcase, badge: "12" },
-  { title: "Paralegal Training", url: "/training", icon: GraduationCap, badge: "3" },
-  { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap, badge: "3" },
-  { title: "Service Bundles", url: "/services", icon: Package, badge: null },
-  { title: "Compliance & Reports", url: "/compliance", icon: Shield, badge: "2" },
-  { title: "Billing", url: "/billing", icon: CreditCard, badge: null },
-  { title: "Profile", url: "/profile", icon: User2, badge: null },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard},
+  { title: "Cases", url: "/cases", icon: Briefcase},
+  { title: "Tasks", url: "/tasks", icon: Briefcase},
+  { title: "Paralegal Training", url: "/training", icon: GraduationCap},
+  { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap},
+  { title: "Service Bundles", url: "/services", icon: Package},
+  { title: "Compliance & Reports", url: "/compliance", icon: Shield},
+  { title: "Billing", url: "/billing", icon: CreditCard},
+  { title: "Profile", url: "/profile", icon: User2},
 ];
 
 const quickActions = [
