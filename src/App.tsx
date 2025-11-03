@@ -18,6 +18,8 @@ import { SectionTrain } from "./pages/Training";
 import { Toaster, toast } from "sonner";
 import TaskManagementPage from "./pages/TaskManagementPage";
 import SingleTaskPage from "./pages/SingleTaskManagement";
+import ForgotPasswordPage from "./pages/ForgetPassword";
+import ResetPasswordPage from "./pages/ResetPassword";
 
 
 
@@ -44,6 +46,8 @@ const App = () => (
           <Route path="/myparalegals" element={<ParalegalDashboard />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

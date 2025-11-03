@@ -20,6 +20,7 @@ import { setAttorney } from "@/store/attorneySlice";
 import Cookies from "js-cookie";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
 import { apiClient } from "@/lib/api/config";
+import { Link } from "react-router-dom";
 
 interface LoginCredentials {
   email: string;
@@ -353,6 +354,16 @@ export default function AuthPage() {
                         Sign Up
                       </span>
                     </button>
+                    <br />
+                    <Link
+                      to={'/auth/forgot-password'}
+                      className="text-sm text-gray-600 hover:text-blue-600"
+                    >
+                    
+                      <span className="font-semibold text-blue-600">
+                        Forget Password ?
+                      </span>
+                    </Link>
                   </div>
                 </form>
               ) : (
@@ -471,6 +482,7 @@ export default function AuthPage() {
                         Sign In
                       </span>
                     </button>
+                   
                   </div>
                 </form>
               )}
