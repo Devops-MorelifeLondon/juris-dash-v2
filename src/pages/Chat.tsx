@@ -10,7 +10,6 @@ import {
   Window,
   ChannelList,
   useChannelStateContext,
-  useChatContext,
 } from "stream-chat-react";
 import "stream-chat-react/dist/css/v2/index.css";
 import { toast } from "sonner";
@@ -20,24 +19,25 @@ import { getChatToken } from "@/services/chatAPI";
 import { apiClient } from "@/lib/api/config";
 import { Layout } from "@/components/ui/layout";
 
-/* -------------------------------------------
-   ✅ Inner Channel Layout
-------------------------------------------- */
+/* ✅ Channel inner content (messages, input, thread overlay) */
 const ChannelInner = () => {
   const { thread } = useChannelStateContext();
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="relative flex flex-col h-full bg-white overflow-hidden">
       <ChannelHeader />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-20 bg-white">
         <MessageList />
       </div>
-      <div className="border-t p-2 bg-white">
+
+      {/* Fixed input bar */}
+      <div className="fixed md:absolute bottom-0 left-0 right-0 bg-white border-t p-2 z-10 md:z-0">
         <MessageInput focus />
       </div>
 
+      {/* Thread overlay */}
       {thread && (
-        <div className="absolute inset-0 bg-white z-30 md:right-0 md:left-auto md:w-[420px] md:border-l md:shadow-lg">
+        <div className="fixed inset-0 md:inset-auto md:right-0 md:top-0 md:h-full md:w-[420px] bg-white border-l shadow-lg z-40 overflow-hidden">
           <Thread />
         </div>
       )}
@@ -45,9 +45,6 @@ const ChannelInner = () => {
   );
 };
 
-/* -------------------------------------------
-   ✅ Main Component
-------------------------------------------- */
 const AttorneyChat = () => {
   const [client, setClient] = useState<StreamChat | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -81,12 +78,10 @@ const AttorneyChat = () => {
     };
 
     initChat();
-    return () => {
-      client?.disconnectUser();
-    };
+    return () => client?.disconnectUser();
   }, []);
 
-  // ✅ Fetch paralegals
+  // ✅ Fetch Paralegals
   useEffect(() => {
     const loadParalegals = async () => {
       try {
@@ -101,7 +96,7 @@ const AttorneyChat = () => {
     loadParalegals();
   }, []);
 
-  // ✅ Create chat channel (and select it)
+  // ✅ Start new chat
   const handleStartChat = async () => {
     if (!client || !selectedParalegal) {
       toast.error("Select a paralegal to start chatting");
@@ -113,10 +108,9 @@ const AttorneyChat = () => {
         members: [client.userID!, selectedParalegal],
       });
       await newChannel.watch();
-      newChannel.query(); // Ensure messages load
-      setSidebarOpen(false);
-      newChannel.watch();
       toast.success("Chat channel created!");
+      setSidebarOpen(false);
+      setIsCreating(false);
     } catch (err) {
       console.error("❌ createChatChannel error:", err);
       toast.error("Failed to create channel");
@@ -136,12 +130,12 @@ const AttorneyChat = () => {
     <Layout>
       <div className="flex flex-col w-full h-[calc(100vh-4.5rem)] bg-white overflow-hidden rounded-none md:rounded-xl">
         <Chat client={client} theme="str-chat__theme-light">
-          <div className="flex h-full w-full relative bg-white">
+          <div className="flex h-full w-full bg-white relative">
             {/* 🧭 Sidebar (collapsible for mobile) */}
             <div
               className={`fixed md:static top-0 left-0 z-40 bg-white border-r shadow-lg md:shadow-none transition-transform duration-300 ease-in-out
                 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
-                w-[85vw] md:w-80 h-full flex flex-col`}
+                w-[80vw] sm:w-[70vw] md:w-80 h-full flex flex-col`}
             >
               <div className="p-4 border-b flex items-center justify-between bg-muted/30">
                 <h2 className="text-lg font-semibold">Paralegal Chats</h2>
@@ -154,7 +148,6 @@ const AttorneyChat = () => {
                     <Plus className="h-5 w-5" />
                   </Button>
                   <Button
-                    id="mobile-sidebar-close-button"
                     size="icon"
                     variant="ghost"
                     className="md:hidden"
@@ -190,21 +183,21 @@ const AttorneyChat = () => {
                 </div>
               )}
 
-              {/* ✅ Channel list that directly updates Stream context */}
+              {/* Channel list */}
               <div className="flex-1 overflow-y-auto">
                 <ChannelList
                   filters={{ members: { $in: [user.id] } }}
                   sort={{ last_message_at: -1 }}
                   options={{ presence: true, state: true }}
-                  onSelect={() => setSidebarOpen(false)} // Close sidebar on mobile
+                  onSelect={() => setSidebarOpen(false)}
                 />
               </div>
             </div>
 
             {/* 💬 Main Chat Section */}
-            <div className="flex-1 relative min-w-0">
+            <div className="flex-1 relative min-w-0 overflow-hidden">
               {/* Mobile Header */}
-              <div className="md:hidden border-b flex items-center justify-between p-3 bg-muted/30 sticky top-0 z-10">
+              <div className="md:hidden border-b flex items-center justify-between p-3 bg-muted/30 sticky top-0 z-20">
                 <Button
                   size="icon"
                   variant="ghost"
@@ -216,8 +209,7 @@ const AttorneyChat = () => {
                 <div className="w-8" />
               </div>
 
-              {/* ✅ Default Active Channel Render */}
-              
+              {/* Channel */}
               <Channel>
                 <ChannelInner />
               </Channel>

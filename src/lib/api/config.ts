@@ -27,17 +27,17 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor - Handle errors globally
-// apiClient.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       const currentPath = window.location.pathname;
-//       if (!currentPath.startsWith('/auth')) {
-//         Cookies.remove('token');
-//         window.location.href = '/auth';
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname;
+      if (!currentPath.startsWith('/auth')) {
+        Cookies.remove('token');
+        window.location.href = '/auth';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 

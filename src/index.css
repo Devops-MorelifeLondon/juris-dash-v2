@@ -280,3 +280,8 @@ All colors MUST be HSL.
     border-left: none !important;
   }
 }
+@supports (padding: max(0px)) {
+  .str-chat__message-input {
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
