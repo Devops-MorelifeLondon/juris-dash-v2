@@ -285,3 +285,40 @@ All colors MUST be HSL.
     padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* 💬 FIX: Lock chat width in Stream Chat even after channel switch */
+.chat-container .str-chat__main-panel,
+.chat-container .str-chat__main-panel-inner,
+.chat-container .str-chat__container,
+.chat-container .str-chat__window {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Make sure Stream Chat doesn't stretch outside our fixed container */
+.chat-container .str-chat {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100%;
+  margin: 0 auto;
+}
+
+/* Prevent layout shift or resize when switching channels */
+.chat-container .str-chat__list--scroll,
+.chat-container .str-chat__virtual-list {
+  scrollbar-gutter: stable;
+}
+
+/* Optional: keep thread panel independent width */
+@media (min-width: 1024px) {
+  .chat-container .str-chat__thread {
+    right: 0 !important;
+    position: absolute !important;
+    width: 420px !important;
+    border-left: 1px solid #eee;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+  }
+}

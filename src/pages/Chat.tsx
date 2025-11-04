@@ -195,25 +195,22 @@ const AttorneyChat = () => {
             </div>
 
             {/* 💬 Main Chat Section */}
-            <div className="flex-1 relative min-w-0 overflow-hidden">
-              {/* Mobile Header */}
-              <div className="md:hidden border-b flex items-center justify-between p-3 bg-muted/30 sticky top-0 z-20">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-                <h2 className="text-base font-semibold">Chat</h2>
-                <div className="w-8" />
-              </div>
+           <div className="flex-1 relative min-w-0 overflow-hidden flex justify-center bg-gray-50">
+  {/* Fixed width chat container */}
+  <div className="chat-container w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-white border-l border-r h-full">
+    <div className="md:hidden border-b flex items-center justify-between p-3 bg-muted/30 sticky top-0 z-20">
+      <Button size="icon" variant="ghost" onClick={() => setSidebarOpen(true)}>
+        <Menu className="h-5 w-5" />
+      </Button>
+      <h2 className="text-base font-semibold">Chat</h2>
+      <div className="w-8" />
+    </div>
 
-              {/* Channel */}
-              <Channel>
-                <ChannelInner />
-              </Channel>
-            </div>
+    <Channel>
+      <ChannelInner />
+    </Channel>
+  </div>
+</div>
           </div>
         </Chat>
       </div>
