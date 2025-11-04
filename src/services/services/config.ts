@@ -3,7 +3,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -17,27 +17,22 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = Cookies.get('token');
-    console.log("Token : ", token);
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor - Handle errors globally
-// apiClient.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       const currentPath = window.location.pathname;
-//       if (!currentPath.startsWith('/auth')) {
-//         Cookies.remove('token');
-//         window.location.href = '/auth';
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      Cookies.remove('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);

@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { 
   LayoutDashboard, Briefcase, GraduationCap, Package, Shield, CreditCard, 
-  Settings, Plus, Search, Bell, Users, Calendar, User2, LogOut, X, CheckCircle, RefreshCw
+  Settings, Plus, Search, Bell, Users, Calendar, User2, LogOut, X, CheckCircle, RefreshCw,
+  MessageCircleIcon
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
@@ -38,6 +39,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard},
   { title: "Cases", url: "/cases", icon: Briefcase},
   { title: "Tasks", url: "/tasks", icon: Briefcase},
+  { title: "Chat", url: "/chat", icon: MessageCircleIcon},
   { title: "Paralegal Training", url: "/training", icon: GraduationCap},
   { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap},
   { title: "Service Bundles", url: "/services", icon: Package},
