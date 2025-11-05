@@ -97,25 +97,62 @@ const AttorneyChat = () => {
   }, []);
 
   // ✅ Start new chat
-  const handleStartChat = async () => {
-    if (!client || !selectedParalegal) {
-      toast.error("Select a paralegal to start chatting");
-      return;
+const handleStartChat = async () => {
+  if (!client || !selectedParalegal) {
+    toast.error("Select a paralegal to start chatting");
+    return;
+  }
+
+  try {
+    // 🔥 Call backend to create or get existing channel
+    const res = await apiClient.post("/api/chat/create-channel", {
+      targetId: selectedParalegal,
+    });
+
+    if (!res.data?.channelId) {
+      throw new Error("Channel ID missing in response");
     }
 
+    // ✅ Get the channel from Stream
+    const channel = client.channel("messaging", res.data.channelId);
+    await channel.watch();
+
+    toast.success("Chat channel ready!");
+    setSidebarOpen(false);
+    setIsCreating(false);
+  } catch (err: any) {
+    console.error("❌ createChatChannel error:", err);
+    toast.error(err?.response?.data?.error || "Failed to create chat");
+  }
+};
+
+
+useEffect(() => {
+  const fetchExistingChannels = async () => {
+    if (!client || !user) return;
     try {
-      const newChannel = client.channel("messaging", {
-        members: [client.userID!, selectedParalegal],
+      const filter = { members: { $in: [user.id] } };
+      const channels = await client.queryChannels(filter);
+      const existingIds = new Set();
+
+      channels.forEach((ch) => {
+        Object.values(ch.state.members).forEach((member: any) => {
+          if (member.user_id !== user.id) existingIds.add(member.user_id);
+        });
       });
-      await newChannel.watch();
-      toast.success("Chat channel created!");
-      setSidebarOpen(false);
-      setIsCreating(false);
+
+      // remove existing ones from paralegal list
+      setParalegalList((prev) =>
+        prev.filter((p) => !existingIds.has(p._id))
+      );
     } catch (err) {
-      console.error("❌ createChatChannel error:", err);
-      toast.error("Failed to create channel");
+      console.error("❌ Failed to filter paralegals:", err);
     }
   };
+
+  fetchExistingChannels();
+}, [client, user]);
+
 
   if (!client || !user)
     return (
