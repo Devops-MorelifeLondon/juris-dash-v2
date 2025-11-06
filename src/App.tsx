@@ -21,6 +21,8 @@ import SingleTaskPage from "./pages/SingleTaskManagement";
 import ForgotPasswordPage from "./pages/ForgetPassword";
 import ResetPasswordPage from "./pages/ResetPassword";
 import AttorneyChat from "./pages/Chat";
+import MeetingDashboard from "./pages/MeetingDashboard";
+
 
 
 
@@ -40,6 +42,7 @@ const App = () => (
           <Route path="/chat" element={<AttorneyChat />} />
           <Route path="/cases" element={<Cases />} />
           <Route path="/tasks" element={<TaskManagementPage />} />
+          <Route path="/meetings" element={<MeetingDashboard />} />
           <Route path="/task/:taskId" element={<SingleTaskPage />} />
           <Route path="/training" element={<SectionTrain />} />
           <Route path="/services" element={<Services />} />
