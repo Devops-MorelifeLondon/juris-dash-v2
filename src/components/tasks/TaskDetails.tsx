@@ -164,8 +164,8 @@ export default function TaskDetails({
                   <AlertCircle className="h-3 w-3 mr-1" /> Overdue
                 </Badge>
               )}
-            <Link to={`/task/${task._id}`}>
-              View
+            <Link className="px-2 shadow-md text-sm rounded-sm py-1 bg-blue-600 text-white" to={`/task/${task._id}`}>
+              Open
             </Link>
             </div>
           </div>
