@@ -326,23 +326,56 @@ const MeetingSection = ({
               className={`border border-${color}-300 rounded-2xl shadow-sm hover:shadow-md transition`}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-slate-700">{m.title}</CardTitle>
+                <CardTitle className="text-lg text-slate-700">
+                  {m.title}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <p className="text-sm text-slate-500">
                   {m.description || "No description"}
                 </p>
-                <p className="text-xs mt-3">
-                  <strong>Start:</strong> {format(new Date(m.startTime), "PPpp")}
-                </p>
-                <p className="text-xs">
-                  <strong>End:</strong> {format(new Date(m.endTime), "PPpp")}
-                </p>
-                <p className="text-xs text-slate-400 mt-1 italic">
-                  {formatDistanceToNow(new Date(m.endTime), {
-                    addSuffix: true,
-                  })}
-                </p>
+
+                {/* Scheduled By */}
+                {m.createdBy && (
+                  <p className="text-xs text-slate-600">
+                    <strong>Scheduled by:</strong>{" "}
+                    {m.createdBy.fullName || m.createdBy.firstName +" "+m.createdBy.lastName || "Unknown"}{" "}
+                    <span className="text-slate-400">
+                      ({m.createdBy.email || "N/A"})
+                    </span>
+                  </p>
+                )}
+
+                {/* Participants */}
+                {m.participants?.length > 0 && (
+                  <p className="text-xs text-slate-600">
+                    <strong>Participants:</strong>{" "}
+                    {m.participants
+                      .map(
+                        (p: any) =>
+                          `${p.fullName || p.firstName +" "+p.lastName || "Unknown"} (${p.email || "N/A"})`
+                      )
+                      .join(", ")}
+                  </p>
+                )}
+
+                {/* Time Details */}
+                <div className="pt-1 text-xs text-slate-500">
+                  <p>
+                    <strong>Start:</strong>{" "}
+                    {format(new Date(m.startTime), "PPpp")}
+                  </p>
+                  <p>
+                    <strong>End:</strong> {format(new Date(m.endTime), "PPpp")}
+                  </p>
+                  <p className="text-slate-400 mt-1 italic">
+                    {formatDistanceToNow(new Date(m.endTime), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
+
+                {/* Meet Link */}
                 {m.meetLink && (
                   <a
                     href={m.meetLink}
