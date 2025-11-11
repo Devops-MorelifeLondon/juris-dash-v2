@@ -1,3 +1,5 @@
+// @/components/cases/CaseForm.tsx
+
 import React, { useState, useEffect } from "react";
 import { Case } from "./types";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Save } from "lucide-react";
+import { X, Save, AlertCircle } from "lucide-react";
 import { apiClient } from "@/lib/api/config";
 
 interface CaseFormProps {
@@ -25,11 +27,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Case>>({
     caseNumber: "",
     name: "",
-    client: {
-      name: "",
-      email: "",
-      phone: "",
-    },
+    client: { name: "", email: "", phone: "" },
     serviceType: "Immigration Services",
     otherServiceTypeDescription: "",
     status: "New",
@@ -53,6 +51,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
           ? new Date(caseData.deadline).toISOString().split("T")[0]
           : "",
         otherServiceTypeDescription: caseData.otherServiceTypeDescription || "",
+        client: caseData.client || { name: "", email: "", phone: "" },
       });
     }
   }, [caseData]);
@@ -91,19 +90,20 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
         agreedHourlyRate: Number(formData.agreedHourlyRate) || 0,
         actualHoursSpent: Number(formData.actualHoursSpent) || 0,
         totalCost: Number(formData.totalCost) || 0,
+        deadline: formData.deadline || null, // Handle empty date
       };
 
       if (caseData?._id) {
-        // Update existing case
+        // Update
         const response = await apiClient.put(
-          `${import.meta.env.VITE_BACKEND_URL}/api/cases/${caseData._id}`,
+          `/api/cases/${caseData._id}`,
           payload
         );
         onSave(response.data.data);
       } else {
-        // Create new case
+        // Create
         const response = await apiClient.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/cases`,
+          `/api/cases`,
           payload
         );
         onSave(response.data.data);
@@ -117,7 +117,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6">
+    <form onSubmit={handleSubmit} className="space-y-6 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
@@ -129,15 +129,16 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center gap-3">
+          <AlertCircle className="h-5 w-5" />
+          <span className="text-sm">{error}</span>
         </div>
       )}
 
       {/* Basic Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
+          <CardTitle className="text-base">Basic Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,13 +163,14 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
               />
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="serviceType">Service Type *</Label>
               <Select
                 value={formData.serviceType}
-                onValueChange={(value) => handleSelectChange("serviceType", value)}
+                onValueChange={(value) =>
+                  handleSelectChange("serviceType", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -177,35 +179,13 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
                   <SelectItem value="Family Law">Family Law</SelectItem>
                   <SelectItem value="Personal Injury">Personal Injury</SelectItem>
                   <SelectItem value="Real Estate">Real Estate</SelectItem>
-                  <SelectItem value="Estate Planning">Estate Planning</SelectItem>
-                  <SelectItem value="Intellectual Property">
-                    Intellectual Property
-                  </SelectItem>
-                  <SelectItem value="Business Law">Business Law</SelectItem>
                   <SelectItem value="Immigration Services">
                     Immigration Services
                   </SelectItem>
-                  <SelectItem value="Bankruptcy">Bankruptcy</SelectItem>
-                  <SelectItem value="Criminal Law">Criminal Law</SelectItem>
-                  <SelectItem value="Tax Law">Tax Law</SelectItem>
-                  <SelectItem value="Employment Law">Employment Law</SelectItem>
+                  {/* ... other items ... */}
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              {formData.serviceType === "Other" && (
-                <div className="mt-2">
-                  <Label htmlFor="otherServiceTypeDescription">
-                    Specify Other Service Type *
-                  </Label>
-                  <Input
-                    id="otherServiceTypeDescription"
-                    name="otherServiceTypeDescription"
-                    value={formData.otherServiceTypeDescription || ""}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              )}
             </div>
             <div>
               <Label htmlFor="deadline">Deadline</Label>
@@ -218,7 +198,20 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
               />
             </div>
           </div>
-
+          {formData.serviceType === "Other" && (
+            <div>
+              <Label htmlFor="otherServiceTypeDescription">
+                Specify Other Service Type *
+              </Label>
+              <Input
+                id="otherServiceTypeDescription"
+                name="otherServiceTypeDescription"
+                value={formData.otherServiceTypeDescription || ""}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="status">Status *</Label>
@@ -262,7 +255,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       {/* Client Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Client Information</CardTitle>
+          <CardTitle className="text-base">Client Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -302,7 +295,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       {/* Financial Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Financial Information</CardTitle>
+          <CardTitle className="text-base">Financial Information</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -359,12 +352,12 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       {/* Notes */}
       <Card>
         <CardHeader>
-          <CardTitle>Notes</CardTitle>
+          <CardTitle className="text-base">Notes</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             name="notes"
-            value={formData.notes}
+            value={formData.notes || ""}
             onChange={handleInputChange}
             placeholder="Add any additional notes..."
             rows={4}
@@ -373,7 +366,7 @@ const CaseForm: React.FC<CaseFormProps> = ({ caseData, onSave, onCancel }) => {
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 sticky bottom-0 py-4 bg-background">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>

@@ -28,7 +28,7 @@ export function Layout({ children, className }: LayoutProps) {
           </header>
 
           {/* Content area with its own scrolling */}
-          <div className="flex-1 overflow-y-auto md:pl-4">
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         </main>

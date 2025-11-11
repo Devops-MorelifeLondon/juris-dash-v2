@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Briefcase,
   Tag,
+  EyeIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import axios from "axios";
@@ -62,7 +63,7 @@ export default function TaskDetails({
   const getPriorityColor = (priority: string) => {
     const colors = {
       Urgent: "bg-red-600 text-white",
-      High: "bg-orange-500 text-white", 
+      High: "bg-orange-500 text-white",
       Medium: "bg-yellow-500 text-black",
       Low: "bg-green-500 text-white",
     };
@@ -93,10 +94,10 @@ export default function TaskDetails({
     return icons[type] || <FileText className="h-4 w-4" />;
   };
 
-  const isOverdue = useMemo(() => 
-    task.dueDate && 
-    new Date(task.dueDate) < new Date() && 
-    !["Completed", "Cancelled"].includes(task.status), 
+  const isOverdue = useMemo(() =>
+    task.dueDate &&
+    new Date(task.dueDate) < new Date() &&
+    !["Completed", "Cancelled"].includes(task.status),
     [task]
   );
 
@@ -164,29 +165,42 @@ export default function TaskDetails({
                   <AlertCircle className="h-3 w-3 mr-1" /> Overdue
                 </Badge>
               )}
-            <Link className="px-2 shadow-md text-sm rounded-sm py-1 bg-blue-600 text-white" to={`/task/${task._id}`}>
-              Open
-            </Link>
+
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              onClick={onEdit} 
-              variant="outline" 
-              size="sm" 
+
+
+
+            <Link to={`/task/${task._id}`} >
+              <Button
+                onClick={onEdit}
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 flex items-center"
+              >
+                <EyeIcon className="h-4 w-4 mr-1" /> View
+              </Button>
+            </Link>
+
+            <Button
+              onClick={onEdit}
+              variant="outline"
+              size="sm"
               className="h-9 px-3"
             >
               <Edit className="h-4 w-4 mr-1" /> Edit
             </Button>
-            <Button 
-              onClick={() => onDelete(task._id)} 
-              variant="destructive" 
+            <Button
+              onClick={() => onDelete(task._id)}
+              variant="destructive"
               size="sm"
               className="h-9 px-3"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
+
           </div>
         </div>
       </CardHeader>
@@ -232,7 +246,7 @@ export default function TaskDetails({
           <div className="space-y-1">
             <span className="text-xs font-medium text-gray-500">Due Date</span>
             <p className={cn(
-              "text-sm flex items-center gap-2", 
+              "text-sm flex items-center gap-2",
               isOverdue ? "text-red-600" : "text-gray-900"
             )}>
               <Calendar className="h-4 w-4" />
@@ -287,19 +301,19 @@ export default function TaskDetails({
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {task.checklistItems.map((item) => (
-                  <div 
-                    key={item._id} 
+                  <div
+                    key={item._id}
                     className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50"
                   >
                     <Checkbox
                       checked={item.completed}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleChecklistToggle(item._id, checked as boolean)
                       }
                       disabled={updatingChecklist}
                       className="mt-0.5"
                     />
-                    <span 
+                    <span
                       className={cn(
                         "text-sm flex-1 cursor-pointer",
                         item.completed && "line-through text-gray-500"

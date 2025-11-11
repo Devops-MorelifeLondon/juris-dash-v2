@@ -34,8 +34,8 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-<Toaster  position="top-right" />
- 
+      <Toaster position="top-right" />
+
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
