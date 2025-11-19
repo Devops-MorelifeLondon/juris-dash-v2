@@ -86,6 +86,7 @@ export default function MeetingDashboard() {
   }, []);
 
   // Schedule Meeting
+ // Schedule Meeting
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!selectedParalegal) return alert("Please select a paralegal");
@@ -106,7 +107,14 @@ export default function MeetingDashboard() {
       setSelectedParalegal(null);
     } catch (err: any) {
       console.error("Schedule error:", err);
-      alert(err.response?.data?.error || "Failed to schedule meeting");
+      
+      const errorMessage = err.response?.data?.error || "Failed to schedule meeting";
+      alert(errorMessage);
+
+      // ⚠️ FIX: If the error is related to Google Auth, reset the UI state
+      if (err.response?.status === 401 && errorMessage.includes("Google")) {
+        setGoogleConnected(false); // This brings back the "Connect Google Calendar" button
+      }
     } finally {
       setLoading(false);
     }
