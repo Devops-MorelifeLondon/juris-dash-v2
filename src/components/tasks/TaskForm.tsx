@@ -32,7 +32,6 @@ import {
   MicOff,
 } from "lucide-react";
 import { toast } from "sonner";
-import Cookies from "js-cookie";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api/config";
 
@@ -59,6 +58,17 @@ interface Paralegal {
   _id: string;
   fullName: string;
   available: Availability;
+}
+
+// ✅ Define SpeechRecognitionEvent type
+interface SpeechRecognitionEvent {
+  results: {
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+      };
+    };
+  };
 }
 
 const AvailabilityBadge = ({ status }: { status: Availability }) => {
@@ -107,12 +117,12 @@ export default function TaskForm({
 
   // ✅ Speech recognition states
   const [isListening, setIsListening] = useState(false);
-  const [activeField, setActiveField] = useState<"title" | "description" | null>(
+  const [activeField, setActiveField] = useState<"title" | "description" | "notes" | null>(
     null
   );
 
   // ✅ Speech recognition logic
-  const startListening = (field: "title" | "description") => {
+  const startListening = (field: "title" | "description" | "notes") => {
     if (!("webkitSpeechRecognition" in window)) {
       toast.error("Speech recognition not supported in this browser.");
       return;
@@ -143,17 +153,30 @@ export default function TaskForm({
           ...prev,
           description: prev.description + " " + transcript,
         }));
+      } else if (field === "notes") {
+        setFormData((prev) => ({
+          ...prev,
+          notes: prev.notes + " " + transcript,
+        }));
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
       toast.error("Speech recognition error. Try again.");
+      setIsListening(false);
+      setActiveField(null);
     };
 
     recognition.onend = () => {
       setIsListening(false);
       setActiveField(null);
     };
+  };
+
+  const stopListening = () => {
+    setIsListening(false);
+    setActiveField(null);
   };
 
   useEffect(() => {
@@ -314,17 +337,17 @@ export default function TaskForm({
                   size="icon"
                   variant={
                     activeField === "title" && isListening
-                      ? "secondary"
+                      ? "destructive"
                       : "outline"
                   }
                   onClick={() =>
                     isListening && activeField === "title"
-                      ? setIsListening(false)
+                      ? stopListening()
                       : startListening("title")
                   }
                 >
                   {isListening && activeField === "title" ? (
-                    <MicOff className="h-4 w-4 text-red-600" />
+                    <MicOff className="h-4 w-4" />
                   ) : (
                     <Mic className="h-4 w-4" />
                   )}
@@ -357,18 +380,18 @@ export default function TaskForm({
                   size="icon"
                   variant={
                     activeField === "description" && isListening
-                      ? "secondary"
+                      ? "destructive"
                       : "outline"
                   }
                   onClick={() =>
                     isListening && activeField === "description"
-                      ? setIsListening(false)
+                      ? stopListening()
                       : startListening("description")
                   }
                   className="mt-1"
                 >
                   {isListening && activeField === "description" ? (
-                    <MicOff className="h-4 w-4 text-red-600" />
+                    <MicOff className="h-4 w-4" />
                   ) : (
                     <Mic className="h-4 w-4" />
                   )}
@@ -497,7 +520,20 @@ export default function TaskForm({
                       key={index}
                       className="flex items-center gap-2 p-2 bg-muted rounded"
                     >
-                      <Checkbox checked={item.completed} disabled />
+                      <Checkbox 
+                        checked={item.completed} 
+                        onCheckedChange={(checked) => {
+                          const updatedItems = [...formData.checklistItems];
+                          updatedItems[index] = {
+                            ...updatedItems[index],
+                            completed: checked as boolean
+                          };
+                          setFormData({
+                            ...formData,
+                            checklistItems: updatedItems
+                          });
+                        }}
+                      />
                       <span className="flex-1 text-sm">{item.text}</span>
                       <Button
                         type="button"
@@ -540,6 +576,7 @@ export default function TaskForm({
                       <button
                         type="button"
                         onClick={() => removeTag(index)}
+                        className="hover:bg-primary/20 rounded-full p-1"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -549,18 +586,41 @@ export default function TaskForm({
               )}
             </div>
 
-            {/* Notes */}
+            {/* Notes with mic */}
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                placeholder="Additional notes..."
-                rows={3}
-              />
+              <div className="flex gap-2 items-start">
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
+                  placeholder="Additional notes..."
+                  rows={3}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={
+                    activeField === "notes" && isListening
+                      ? "destructive"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    isListening && activeField === "notes"
+                      ? stopListening()
+                      : startListening("notes")
+                  }
+                  className="mt-1"
+                >
+                  {isListening && activeField === "notes" ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </ScrollArea>
