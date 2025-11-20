@@ -1,84 +1,104 @@
-import { Layout } from "@/components/ui/layout";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api/config";
-import { Mic, MicOff } from "lucide-react";
+import { Layout } from "@/components/ui/layout";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+
+// Icons
+import { 
+  Mic, MicOff, UploadCloud, FileText, Video, 
+  X, Download, Eye, Loader2, File, Calendar, 
+  Users, ArrowRight 
+} from "lucide-react";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SectionTrain = () => {
-  // --- STATE ---
-  const [file, setFile] = useState(null);
+  // ---------------- State ----------------
+  const [files, setFiles] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState("Paralegal Template");
   const [assignedTo, setAssignedTo] = useState("Both");
   const [priority, setPriority] = useState("Low");
   const [description, setDescription] = useState("");
-  const [uploadHistory, setUploadHistory] = useState([]);
   const [paralegals, setParalegals] = useState([]);
   const [selectedParalegals, setSelectedParalegals] = useState([]);
-
-  const [dragActive, setDragActive] = useState(false);
-  const [message, setMessage] = useState(null);
-
-  // ✅ Speech recognition states
+  const [uploadHistory, setUploadHistory] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Speech
   const [isListening, setIsListening] = useState(false);
-  const [activeField, setActiveField] = useState<"documentName" | "description" | null>(null);
+  const [activeField, setActiveField] = useState(null);
 
-  // ✅ Speech recognition logic
-  const startListening = (field: "documentName" | "description") => {
-    if (!("webkitSpeechRecognition" in window)) {
-      setMessage({ type: "error", text: "Speech recognition not supported in this browser." });
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const navigate = useNavigate();
+
+  // ---------------- Logic ----------------
+  const startListening = (field) => {
+    if (typeof window !== "undefined" && !("webkitSpeechRecognition" in window)) {
+      toast.error("Speech recognition not supported in this browser.");
       return;
     }
-
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = false;
-    recognition.lang = "en-IN";
-    recognition.interimResults = false;
-
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRecognition();
+    rec.continuous = false;
+    rec.lang = "en-IN";
+    rec.interimResults = false;
     setIsListening(true);
     setActiveField(field);
-    recognition.start();
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
+    rec.start();
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
       if (field === "documentName") {
-        setDocumentName(prev => prev + " " + transcript);
-      } else if (field === "description") {
-        setDescription(prev => prev + " " + transcript);
+        setDocumentName((prev) => (prev ? prev + " " + text : text));
+      } else {
+        setDescription((prev) => (prev ? prev + " " + text : text));
       }
     };
-
-    recognition.onerror = () => {
-      setMessage({ type: "error", text: "Speech recognition error. Try again." });
-    };
-
-    recognition.onend = () => {
+    rec.onend = () => {
       setIsListening(false);
       setActiveField(null);
     };
   };
 
-  const stopListening = () => {
-    setIsListening(false);
-    setActiveField(null);
-  };
-
-  // ---------------- FETCH HISTORY ----------------
   const fetchHistory = async () => {
     try {
       const res = await apiClient.get("/api/training/history");
       if (res.data.success) {
-        const formatted = res.data.data.map((doc) => ({
-          ...doc,
-          createdAt: new Date(doc.createdAt).toLocaleString(),
-        }));
-        setUploadHistory(formatted);
+        setUploadHistory(
+          res.data.data.map((d) => ({
+            ...d,
+            createdAt: new Date(d.createdAt).toLocaleDateString("en-IN", { 
+               year: 'numeric', month: 'short', day: 'numeric' 
+            }),
+          }))
+        );
       }
-    } catch (err) {
-      console.error("Error fetching history", err);
+    } catch (error) {
+      console.error("Failed to fetch history");
+    }
+  };
+
+  const loadParalegals = async () => {
+    try {
+      const res = await apiClient.get("/api/paralegals/linked");
+      if (res.data.success) setParalegals(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch paralegals");
     }
   };
 
@@ -86,11 +106,105 @@ const SectionTrain = () => {
     fetchHistory();
   }, []);
 
-  // ---------------- GET DOWNLOAD URL ----------------
-  const getSignedUrl = async (key) => {
-    const res = await apiClient.get(
-      `/api/training/file-url?key=${encodeURIComponent(key)}`
+  useEffect(() => {
+    if (assignedTo === "Paralegal" || assignedTo === "Both") {
+      loadParalegals();
+    }
+  }, [assignedTo]);
+
+  const handleParalegalToggle = (id) => {
+    setSelectedParalegals((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
+  };
+
+  const removeFile = (index) => setFiles(files.filter((_, i) => i !== index));
+  const removeVideo = (index) => setVideos(videos.filter((_, i) => i !== index));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // --- VALIDATION START ---
+    const requiresParalegal = assignedTo === "Paralegal" || assignedTo === "Both";
+    if (requiresParalegal && selectedParalegals.length === 0) {
+      toast.error("Please select at least one paralegal to assign this material.");
+      return; // Stop execution
+    }
+    // --- VALIDATION END ---
+
+    setIsUploading(true);
+    let uploadedFiles = [];
+    let uploadedVideos = [];
+    
+    try {
+      // Upload Files
+      for (let f of files) {
+        const res = await apiClient.post("/api/training/generate-file-upload-url", {
+          fileName: f.name,
+          fileType: f.type,
+        });
+        await fetch(res.data.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": f.type },
+          body: f,
+        });
+        uploadedFiles.push({
+          filePath: res.data.key,
+          originalFileName: f.name,
+          fileType: f.type,
+          fileSize: f.size,
+          s3Url: res.data.uploadUrl.split("?")[0],
+        });
+      }
+      // Upload Videos
+      for (let v of videos) {
+        const res = await apiClient.post("/api/training/generate-video-upload-url", {
+          fileName: v.name,
+          fileType: v.type,
+          fileSize: v.size,
+        });
+        await fetch(res.data.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": v.type },
+          body: v,
+        });
+        uploadedVideos.push({
+          filePath: res.data.key,
+          originalFileName: v.name,
+          fileType: v.type,
+          fileSize: v.size,
+          s3Url: res.data.uploadUrl.split("?")[0],
+        });
+      }
+      // Save Metadata
+      await apiClient.post("/api/training/save-metadata", {
+        documentName,
+        documentType,
+        assignedTo,
+        priority,
+        description,
+        paralegalAssignedTo: selectedParalegals,
+        files: uploadedFiles,
+        videos: uploadedVideos,
+      });
+      
+      toast.success("Training material uploaded successfully!");
+      
+      setFiles([]);
+      setVideos([]);
+      setDocumentName("");
+      setDescription("");
+      setSelectedParalegals([]);
+      fetchHistory();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const getSignedUrl = async (key) => {
+    const res = await apiClient.get(`/api/training/file-url?key=${key}`);
     return res.data.url;
   };
 
@@ -98,461 +212,319 @@ const SectionTrain = () => {
     try {
       const url = await getSignedUrl(key);
       window.open(url, "_blank");
-    } catch {
-      setMessage({ type: "error", text: "Preview failed" });
+    } catch (e) {
+      toast.error("Could not generate preview URL");
     }
   };
 
-  const handleDownload = async (key, fileName) => {
+  const handleDownload = async (key, name) => {
     try {
       const url = await getSignedUrl(key);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-    } catch {
-      setMessage({ type: "error", text: "Download failed" });
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", name);
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      toast.error("Could not download file");
     }
   };
 
-  // ---------------- UPLOAD HANDLER ----------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage(null);
+  // ---------------- Helper for Table Cell ----------------
+  const AttachmentList = ({ items, icon: Icon, typeLabel }) => {
+    if (!items || items.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
 
-    if (!file) {
-      return setMessage({ type: "error", text: "Please select a file." });
-    }
+    return (
+      <div className="space-y-2">
+        {items.map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between bg-muted/30 p-2 rounded-md border border-muted">
+            <div className="flex items-center gap-2 overflow-hidden mr-2">
+              <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-xs font-medium truncate max-w-[120px] lg:max-w-[180px]" title={item.originalFileName}>
+                {item.originalFileName}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => { e.preventDefault(); handlePreview(item.filePath); }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Preview {typeLabel}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-    try {
-      // 1️⃣ Generate presigned upload URL
-      const presignRes = await apiClient.post("/api/training/generate-upload-url", {
-        fileName: file.name,
-        fileType: file.type,
-      });
-
-      const { uploadUrl, key } = presignRes.data;
-
-      // 2️⃣ Upload file directly to S3
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("S3 Upload failed");
-      }
-
-      // 3️⃣ Save metadata
-      await apiClient.post("/api/training/save-metadata", {
-        documentName,
-        documentType,
-        assignedTo,
-        priority,
-        description,
-        filePath: key,
-        originalFileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        paralegalAssignedTo: selectedParalegals 
-      });
-
-      setMessage({ type: "success", text: "Document uploaded successfully!" });
-
-      setFile(null);
-      setDocumentName("");
-      setDescription("");
-      setSelectedParalegals([]);
-      fetchHistory();
-    } catch (err) {
-      console.error(err);
-      setMessage({
-        type: "error",
-        text: err.response?.data?.message || "Upload failed.",
-      });
-    }
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      onClick={(e) => { e.preventDefault(); handleDownload(item.filePath, item.originalFileName); }}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Download {typeLabel}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  // ---------------- DRAG N DROP ----------------
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (["dragenter", "dragover"].includes(e.type)) setDragActive(true);
-    else if (e.type === "dragleave") setDragActive(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);
-  };
-
-  // ---------------- STATUS COLORS ----------------
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Completed":
-        return "bg-green-100 text-green-800";
-      case "In Training":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-yellow-100 text-yellow-800";
-    }
-  };
-
-  useEffect(() => {
-    if (assignedTo === "Paralegal" || assignedTo === "Both") {
-      loadParalegals();
-    }
-  }, [assignedTo]);
-
-  const loadParalegals = async () => {
-    try {
-      const res = await apiClient.get("/api/paralegals/linked");
-      if (res.data.success) {
-        setParalegals(res.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to load paralegals", err);
-    }
-  };
-
-  // ---------------- UI ----------------
+  // ---------------- Render ----------------
   return (
     <Layout>
-      <section id="train" className="bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto py-12 px-4 lg:px-8">
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 text-gray-900">
-              Upload Training Documents
-            </h3>
+      <div className="container mx-auto p-4 md:p-8 max-w-6xl space-y-8">
+        
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Training Center</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Upload new materials to train the AI assistant.
+          </p>
+        </div>
 
-            {/* FORM */}
-            <div className="p-4 rounded-xl border bg-white shadow-sm">
-              <form className="space-y-4" onSubmit={handleSubmit}>
-
-                {/* DOCUMENT NAME with mic */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Document Name
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      placeholder="Enter document name"
-                      className="w-full p-2 border rounded-md"
+        {/* ---------------- FORM CARD ---------------- */}
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Upload Material</CardTitle>
+            <CardDescription>Fill in the details below.</CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Grid Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Document Name</Label>
+                  <div className="relative">
+                    <Input 
                       value={documentName}
                       onChange={(e) => setDocumentName(e.target.value)}
+                      placeholder="e.g. Annual Compliance Report"
                       required
+                      className="pr-10"
                     />
-                    <button
+                    <Button
                       type="button"
-                      className={`p-2 border rounded-md ${
-                        activeField === "documentName" && isListening
-                          ? "bg-red-600 border-red-300"
-                          : "bg-gray-50 border-gray-300"
-                      }`}
-                      onClick={() =>
-                        isListening && activeField === "documentName"
-                          ? stopListening()
-                          : startListening("documentName")
-                      }
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full text-muted-foreground hover:text-primary"
+                      onClick={() => isListening ? setIsListening(false) : startListening("documentName")}
                     >
-                      {isListening && activeField === "documentName" ? (
-                        <MicOff className="h-4 w-4 text-white bg-red-600" />
-                      ) : (
-                        <Mic className="h-4 w-4 text-gray-600" />
-                      )}
-                    </button>
+                      {isListening && activeField === "documentName" ? <MicOff className="h-4 w-4 text-red-500" /> : <Mic className="h-4 w-4" />}
+                    </Button>
                   </div>
                 </div>
 
-                {/* SELECTS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Document Type
-                    </label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={documentType}
-                      onChange={(e) => setDocumentType(e.target.value)}
-                    >
-                      <option>Paralegal Template</option>
-                      <option>AI Draft</option>
-                      <option>SOP</option>
-                      <option>Research Material</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Assigned To
-                    </label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                    >
-                      <option>Both</option>
-                      <option>AI</option>
-                      <option>Paralegal</option>
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Document Type</Label>
+                  <Select value={documentType} onValueChange={setDocumentType}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Paralegal Template">Paralegal Template</SelectItem>
+                      <SelectItem value="AI Draft">AI Draft</SelectItem>
+                      <SelectItem value="SOP">SOP</SelectItem>
+                      <SelectItem value="Research Material">Research Material</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {(assignedTo === "Paralegal" || assignedTo === "Both") && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Assign To Paralegal(s)
-                    </label>
-
-                    <select
-                      multiple
-                      className="w-full p-2 border rounded-md h-32"
-                      value={selectedParalegals}
-                      onChange={(e) => {
-                        const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
-                        setSelectedParalegals(selected);
-                      }}
-                    >
-                      {paralegals.length === 0 && (
-                        <option disabled>No paralegals linked to you</option>
-                      )}
-
-                      {paralegals.map((p) => (
-                        <option key={p._id} value={p._id}>
-                          {p.firstName} {p.lastName}
-                        </option>
-                      ))}
-                    </select>
-
-                    <p className="text-xs text-gray-500 mt-1">
-                      Hold CTRL (Windows) or CMD (Mac) to select multiple.
-                    </p>
-                  </div>
-                )}
-
-                {/* FILE UPLOAD */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload File
-                  </label>
-
-                  <div
-                    className={`relative w-full p-4 border-2 border-dashed rounded-md text-center transition ${
-                      dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-                    }`}
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                  >
-                    <input
-                      type="file"
-                      accept=".docx,application/pdf,text/plain"
-                      onChange={(e) => setFile(e.target.files[0])}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <p className="text-sm text-gray-600">
-                      {file ? file.name : "Drag & drop or click to browse"}
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select value={priority} onValueChange={setPriority}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* PRIORITY */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Priority
-                  </label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
-                  >
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
+                <div className="space-y-2">
+                  <Label>Assigned To</Label>
+                  <Select value={assignedTo} onValueChange={setAssignedTo}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Both">Both AI & Paralegal</SelectItem>
+                      <SelectItem value="AI">AI Only</SelectItem>
+                      <SelectItem value="Paralegal">Paralegal Only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-
-                {/* DESCRIPTION with mic */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <div className="flex gap-2 items-start">
-                    <textarea
-                      rows={3}
-                      className="w-full p-2 border rounded-md"
-                      placeholder="Add instructions/notes..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                    ></textarea>
-                    <button
-                      type="button"
-                      className={`p-2 border rounded-md mt-1 ${
-                        activeField === "description" && isListening
-                          ? "bg-red-600 border-red-300"
-                          : "bg-gray-50 border-gray-300"
-                      }`}
-                      onClick={() =>
-                        isListening && activeField === "description"
-                          ? stopListening()
-                          : startListening("description")
-                      }
-                    >
-                      {isListening && activeField === "description" ? (
-                         <MicOff className="h-4 w-4 text-white bg-red-600" />
-                      ) : (
-                        <Mic className="h-4 w-4 text-gray-600" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* MESSAGE */}
-                {message && (
-                  <div
-                    className={`p-3 rounded-md text-sm ${
-                      message.type === "success"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {message.text}
-                  </div>
-                )}
-
-                {/* BUTTONS */}
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    className="px-6 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                    onClick={() => {
-                      setFile(null);
-                      setDocumentName("");
-                      setDescription("");
-                      setSelectedParalegals([]);
-                      setMessage(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Upload & Train
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* HISTORY TABLE */}
-            <div className="mt-6">
-              <h4 className="text-base font-semibold mb-3 text-gray-900">
-                Upload History
-              </h4>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Document Name
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Uploaded By
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Date
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Assigned To
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Preview
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs text-gray-500 uppercase">
-                        Download
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {uploadHistory.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          className="px-3 py-2 text-sm text-gray-500 text-center"
-                        >
-                          No documents uploaded yet.
-                        </td>
-                      </tr>
-                    )}
-
-                    {uploadHistory.map((doc) => (
-                      <tr key={doc._id}>
-                        <td className="px-3 py-2 text-sm text-gray-900">
-                          {doc.documentName}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-900">
-                          {doc.uploadedBy}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-900">
-                          {doc.createdAt}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-900">
-                          {doc.assignedTo}
-                        </td>
-
-                        <td className="px-3 py-2">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                              doc.status
-                            )}`}
-                          >
-                            {doc.status}
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() => handlePreview(doc.filePath)}
-                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                          >
-                            Preview
-                          </button>
-                        </td>
-
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() =>
-                              handleDownload(doc.filePath, doc.originalFileName)
-                            }
-                            className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-                          >
-                            Download
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
               </div>
-            </div>
 
-          </div>
-        </div>
-      </section>
+              {/* --- PARALEGAL SELECTION / EMPTY STATE --- */}
+              {(assignedTo === "Paralegal" || assignedTo === "Both") && (
+                <div className="space-y-2">
+                  <Label>Assign to Paralegals <span className="text-red-500">*</span></Label>
+                  
+                  {paralegals.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/30 text-center space-y-3">
+                      <Users className="h-10 w-10 text-muted-foreground/50" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">No dedicated paralegals found.</p>
+                        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                          You need to add a task first. Once a paralegal accepts your task, they will appear here.
+                        </p>
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() =>  navigate("/tasks")}
+                      >
+                        Go to Tasks <ArrowRight className="ml-2 h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-32 rounded-md border p-4 bg-background">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {paralegals.map((p) => (
+                          <div key={p._id} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded transition-colors">
+                            <Checkbox id={p._id} checked={selectedParalegals.includes(p._id)} onCheckedChange={() => handleParalegalToggle(p._id)} />
+                            <Label htmlFor={p._id} className="text-sm font-normal cursor-pointer w-full">{p.firstName} {p.lastName}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <div className="relative">
+                  <Textarea className="min-h-[80px] pr-10" placeholder="Add context..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                   <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2 h-8 w-8 text-muted-foreground" onClick={() => isListening ? setIsListening(false) : startListening("description")}>
+                      {isListening && activeField === "description" ? <MicOff className="h-4 w-4 text-red-500" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label>Documents</Label>
+                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-all text-center h-32">
+                    <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">Click to Upload Docs</p>
+                    <span className="text-xs text-muted-foreground mt-1">PDF, DOCX, TXT</span>
+                  </div>
+                  <input type="file" multiple accept=".pdf,.docx,.txt" className="hidden" ref={fileInputRef} onChange={(e) => setFiles([...files, ...Array.from(e.target.files)])} />
+                  {files.length > 0 && (
+                    <div className="space-y-2">
+                      {files.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm bg-muted/40 p-2 px-3 rounded border">
+                          <div className="flex items-center gap-2 overflow-hidden"><File className="h-3 w-3 flex-shrink-0" /><span className="truncate max-w-[150px]">{f.name}</span></div>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 flex-shrink-0" onClick={() => removeFile(i)}><X className="h-3 w-3" /></Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <Label>Videos</Label>
+                  <div onClick={() => videoInputRef.current?.click()} className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-all text-center h-32">
+                    <Video className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">Click to Upload Videos</p>
+                    <span className="text-xs text-muted-foreground mt-1">MP4, MKV</span>
+                  </div>
+                  <input type="file" multiple accept="video/*" className="hidden" ref={videoInputRef} onChange={(e) => setVideos([...videos, ...Array.from(e.target.files)])} />
+                   {videos.length > 0 && (
+                    <div className="space-y-2">
+                      {videos.map((v, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm bg-muted/40 p-2 px-3 rounded border">
+                          <div className="flex items-center gap-2 overflow-hidden"><Video className="h-3 w-3 flex-shrink-0" /><span className="truncate max-w-[150px]">{v.name}</span></div>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 flex-shrink-0" onClick={() => removeVideo(i)}><X className="h-3 w-3" /></Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full md:w-auto md:px-8" disabled={isUploading}>
+                {isUploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</> : <><UploadCloud className="mr-2 h-4 w-4" /> Upload & Train</>}
+              </Button>
+
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* ---------------- HISTORY TABLE ---------------- */}
+        <Card className="shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle>History</CardTitle>
+            <CardDescription>Manage your uploaded files and videos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[800px] md:min-w-full"> 
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[200px]">Details</TableHead>
+                    <TableHead className="min-w-[300px]">Documents</TableHead>
+                    <TableHead className="min-w-[300px]">Videos</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {uploadHistory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No history found.</TableCell>
+                    </TableRow>
+                  ) : (
+                    uploadHistory.map((item) => (
+                      <TableRow key={item._id} className="hover:bg-transparent">
+                        {/* Col 1: Meta Info */}
+                        <TableCell className="align-top py-4">
+                          <div className="flex flex-col gap-2">
+                            <span className="font-semibold text-base text-foreground">{item.documentName}</span>
+                            <Badge variant="outline" className="w-fit font-normal">{item.documentType}</Badge>
+                            <div className="flex items-center text-xs text-muted-foreground gap-1 mt-1">
+                               <Calendar className="h-3 w-3" />
+                               {item.createdAt}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        {/* Col 2: Files List */}
+                        <TableCell className="align-top py-4">
+                          <AttachmentList items={item.files} icon={FileText} typeLabel="File" />
+                        </TableCell>
+
+                        {/* Col 3: Videos List */}
+                        <TableCell className="align-top py-4">
+                           <AttachmentList items={item.videos} icon={Video} typeLabel="Video" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+      </div>
     </Layout>
   );
 };
