@@ -108,7 +108,7 @@ const AttorneyTrainingDocuments = () => {
             />
           </div>
           {/* Optional: Quick link to create new if you have that page */}
-          <Button onClick={() => navigate("/documents/create")} className="gap-2">
+          <Button onClick={() => navigate("/training")} className="gap-2">
             <Plus className="w-4 h-4" /> New Module
           </Button>
         </div>
