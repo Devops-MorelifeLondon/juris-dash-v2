@@ -220,7 +220,7 @@ const SectionTrain = () => {
         assignedTo,
         priority,
         description,
-        paralegalAssignedTo: selectedParalegals,
+        assignedParalegals: selectedParalegals, 
         files: uploadedFiles,
         videos: uploadedVideos,
       });

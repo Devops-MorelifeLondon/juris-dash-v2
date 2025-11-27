@@ -12,6 +12,7 @@ import {
   RefreshCw,
   MessageCircleIcon,
   Calendar1Icon,
+  Activity,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
@@ -47,7 +48,8 @@ const navigationItems = [
   { title: "Tasks", url: "/tasks", icon: Briefcase },
   { title: "Chat", url: "/chat", icon: MessageCircleIcon },
   { title: "Meetings", url: "/meetings", icon: Calendar1Icon },
-  { title: "Paralegal Training", url: "/training", icon: GraduationCap },
+  { title: "Upload Training", url: "/training", icon: GraduationCap },
+  { title: "Monitor Training", url: "/documents/attorney-training", icon: Activity }, // <-- New Route
   { title: "My Paralegals", url: "/myparalegals", icon: GraduationCap },
   { title: "Service Bundles", url: "/services", icon: Package },
   { title: "Billing", url: "/billing", icon: CreditCard },

@@ -1,4 +1,3 @@
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -15,7 +14,7 @@ import ParalegalDashboard from "./pages/MyParalegals";
 import ProfilePage from "./pages/Profile";
 import AuthPage from "./pages/AuthPage";
 import { SectionTrain } from "./pages/Training";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
 import TaskManagementPage from "./pages/TaskManagementPage";
 import SingleTaskPage from "./pages/SingleTaskManagement";
 import ForgotPasswordPage from "./pages/ForgetPassword";
@@ -23,11 +22,9 @@ import ResetPasswordPage from "./pages/ResetPassword";
 import AttorneyChat from "./pages/Chat";
 import MeetingDashboard from "./pages/MeetingDashboard";
 
-
-
-
-
-
+// --- Import New Attorney Training Pages ---
+import AttorneyTrainingDocuments from "./pages/AttorneyTrainingDocuments";
+import SingleAttorneyTrainingDocument from "./pages/SingleAttorneyTrainingDocument";
 
 const queryClient = new QueryClient();
 
@@ -44,15 +41,24 @@ const App = () => (
           <Route path="/tasks" element={<TaskManagementPage />} />
           <Route path="/meetings" element={<MeetingDashboard />} />
           <Route path="/task/:taskId" element={<SingleTaskPage />} />
+          
+          {/* General Training Section */}
           <Route path="/training" element={<SectionTrain />} />
+
+          {/* New Attorney Training Monitoring Routes */}
+          <Route path="/documents/attorney-training" element={<AttorneyTrainingDocuments />} />
+          <Route path="/documents/attorney-training/:documentId" element={<SingleAttorneyTrainingDocument />} />
+
           <Route path="/services" element={<Services />} />
           <Route path="/compliance" element={<Compliance />} />
           <Route path="/billing" element={<Billing />} />
+          <Route path="/settings" element={<Settings />} /> {/* Added missing settings route based on imports */}
           <Route path="/myparalegals" element={<ParalegalDashboard />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
