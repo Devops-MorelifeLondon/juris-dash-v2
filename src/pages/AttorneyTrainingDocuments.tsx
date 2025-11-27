@@ -37,7 +37,7 @@ interface TrainingDocument {
   videos: any[];
   createdAt: string;
   uploadedBy: string;
-  paralegalAssignedTo: string[]; // ID array
+  assignedParalegals: string[]; // ID array
 }
 
 const AttorneyTrainingDocuments = () => {
@@ -164,7 +164,7 @@ const AttorneyTrainingDocuments = () => {
                   {/* Show number of assignees if available */}
                   <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md ml-auto">
                     <Users className="w-3.5 h-3.5" />
-                    {doc.paralegalAssignedTo?.length || 0} Assigned
+                    {doc.assignedParalegals?.length || 0} Assigned
                   </div>
                 </div>
               </CardContent>
