@@ -132,7 +132,7 @@ const stripePromise = loadStripe("pk_test_51PtoHBSAesGGuP4gdOJJ7iOllV3BgaEb9zbOf
             </Button>
             <Button 
               className="w-full gap-2 bg-primary hover:bg-primary/90"
-              onClick={() => navigate("/dashboard")} // Or wherever you want them to go
+              onClick={() => navigate("/")} // Or wherever you want them to go
             >
               Go to Dashboard <ArrowRight className="w-4 h-4" />
             </Button>
