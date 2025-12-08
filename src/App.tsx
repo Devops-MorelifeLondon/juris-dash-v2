@@ -21,6 +21,7 @@ import ForgotPasswordPage from "./pages/ForgetPassword";
 import ResetPasswordPage from "./pages/ResetPassword";
 import AttorneyChat from "./pages/Chat";
 import MeetingDashboard from "./pages/MeetingDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 // --- Import New Attorney Training Pages ---
 import AttorneyTrainingDocuments from "./pages/AttorneyTrainingDocuments";
@@ -44,6 +45,9 @@ const App = () => (
           
           {/* General Training Section */}
           <Route path="/training" element={<SectionTrain />} />
+
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+{/* <Route path="/payment-cancel" element={<PaymentCancel />} /> */}
 
           {/* New Attorney Training Monitoring Routes */}
           <Route path="/documents/attorney-training" element={<AttorneyTrainingDocuments />} />
