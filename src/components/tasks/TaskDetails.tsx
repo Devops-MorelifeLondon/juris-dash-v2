@@ -23,10 +23,12 @@ import {
   Briefcase,
   Tag,
   EyeIcon,
+  Paperclip,
+  File,
+  Download,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
-import axios from "axios";
-import Cookies from "js-cookie";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api/config";
@@ -39,18 +41,6 @@ interface TaskDetailsProps {
   onUpdate: (updatedTask: Task) => void;
 }
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
-});
-
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 export default function TaskDetails({
   task,
   onEdit,
@@ -58,6 +48,9 @@ export default function TaskDetails({
   onUpdate,
 }: TaskDetailsProps) {
   const [updatingChecklist, setUpdatingChecklist] = useState(false);
+  
+  // State to track which file is currently being processed
+  const [openingFileIndex, setOpeningFileIndex] = useState<number | null>(null);
 
   // Priority colors
   const getPriorityColor = (priority: string) => {
@@ -116,6 +109,48 @@ export default function TaskDetails({
     }
   };
 
+  // ✅ Secure File Access Handler
+  const handleFileClick = async (e: React.MouseEvent, fileUrl: string, index: number) => {
+    e.preventDefault(); // Stop default link navigation
+    
+    // Prevent multiple clicks
+    if (openingFileIndex !== null) return;
+
+    setOpeningFileIndex(index);
+
+    try {
+      // 1. Extract Key from URL
+      // Assuming URL format: https://bucket.s3.region.amazonaws.com/task/documents/filename
+      let key = "";
+      try {
+        const urlObj = new URL(fileUrl);
+        // The pathname includes the leading slash, remove it to get the Key
+        key = urlObj.pathname.substring(1); 
+      } catch (e) {
+        console.error("Invalid URL format:", fileUrl);
+        toast.error("Invalid file URL format");
+        setOpeningFileIndex(null);
+        return;
+      }
+
+      // 2. Request Signed URL from Backend
+      // Uses the new route: /api/tasks/download-url
+      const response = await apiClient.get(`/api/tasks/download-url?key=${encodeURIComponent(key)}`);
+      
+      if (response.data.success && response.data.url) {
+        // 3. Open the secure, time-limited URL
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Failed to generate secure link");
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Error accessing file. It may be missing or access denied.");
+    } finally {
+      setOpeningFileIndex(null);
+    }
+  };
+
   const checklistProgress = useMemo(() => {
     const total = task.checklistItems.length;
     const completed = task.checklistItems.filter(item => item.completed).length;
@@ -165,17 +200,12 @@ export default function TaskDetails({
                   <AlertCircle className="h-3 w-3 mr-1" /> Overdue
                 </Badge>
               )}
-
             </div>
           </div>
 
           <div className="flex gap-2">
-
-
-
             <Link to={`/task/${task._id}`} >
               <Button
-                onClick={onEdit}
                 variant="outline"
                 size="sm"
                 className="h-9 px-3 flex items-center"
@@ -200,7 +230,6 @@ export default function TaskDetails({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-
           </div>
         </div>
       </CardHeader>
@@ -284,6 +313,53 @@ export default function TaskDetails({
             </div>
           )}
         </div>
+
+        {/* Documents / Attachments Section */}
+        {task.attachments && task.attachments.length > 0 && (
+          <>
+            <Separator />
+            <div>
+              <h3 className="font-medium mb-3 text-gray-900 flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Documents & Attachments
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {task.attachments.map((att: any, index: number) => (
+                  <a
+                    key={index}
+                    href="#" // Use hash to prevent default nav, onClick handles logic
+                    onClick={(e) => handleFileClick(e, att.url, index)}
+                    className={cn(
+                      "flex items-center p-2.5 border rounded-lg transition-colors group bg-white cursor-pointer relative",
+                      openingFileIndex === index ? "bg-gray-50" : "hover:bg-gray-50"
+                    )}
+                  >
+                    <div className="p-2 bg-blue-50 rounded-md mr-3 group-hover:bg-blue-100 transition-colors">
+                      <File className="h-4 w-4 text-blue-600" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate" title={att.name}>
+                        {att.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {att.size ? `${(att.size / 1024 / 1024).toFixed(2)} MB` : 'Document'}
+                        {att.uploadedAt && ` • ${format(new Date(att.uploadedAt), "MMM d")}`}
+                      </p>
+                    </div>
+
+                    {/* Show Loader if this specific file is opening, else show Download icon */}
+                    {openingFileIndex === index ? (
+                      <Loader2 className="h-4 w-4 text-blue-600 animate-spin ml-2" />
+                    ) : (
+                      <Download className="h-4 w-4 text-gray-400 group-hover:text-gray-600 ml-2" />
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Checklist */}
         {task.checklistItems.length > 0 && (

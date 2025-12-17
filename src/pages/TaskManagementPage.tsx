@@ -79,11 +79,22 @@ export default function TaskManagementPage() {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
-
-  const handleSave = async (taskData: any) => {
+const handleSave = async (taskData: any) => {
     try {
+      // 1. Check if we are sending FormData (files) or regular JSON
+      const isFormData = taskData instanceof FormData;
+
+      // 2. Configure headers
+      // If FormData: Set Content-Type to undefined. This forces the browser to 
+      // automatically generate 'multipart/form-data; boundary=----WebKitFormBoundary...'
+      // If JSON: It falls back to the apiClient default ('application/json')
+      const config = isFormData 
+        ? { headers: { "Content-Type": undefined } }
+        : {};
+
       if (view === "new") {
-        const response = await apiClient.post("/api/tasks", taskData);
+        // Pass 'config' as the third argument
+        const response = await apiClient.post("/api/tasks", taskData, config);
 
         if (response.data?.data) {
           const apiTask = response.data.data;
@@ -94,9 +105,9 @@ export default function TaskManagementPage() {
             _id: apiTask._id,
             title: apiTask.title,
             description: apiTask.description,
-            assignedBy: apiTask.assignedBy || apiTask.assignedBy._id, // choose what you want stored
+            assignedBy: apiTask.assignedBy || apiTask.assignedBy._id,
             type: apiTask.type,
-            status: apiTask.status === "Not Started" ? "Pending" : apiTask.status, // optional normalization
+            status: apiTask.status === "Not Started" ? "Pending" : apiTask.status,
             priority: apiTask.priority,
             dueDate: apiTask.dueDate,
             startDate: apiTask.startDate,
@@ -106,6 +117,8 @@ export default function TaskManagementPage() {
             checklistItems: apiTask.checklistItems || [],
             notes: apiTask.notes,
             tags: apiTask.tags || [],
+            // Ensure attachments are mapped if returned
+            attachments: apiTask.attachments || [], 
             createdAt: apiTask.createdAt,
             updatedAt: apiTask.updatedAt,
           };
@@ -118,13 +131,23 @@ export default function TaskManagementPage() {
           setSelectedTask(newTask);
         }
       } else if (selectedTask) {
-        const response = await apiClient.put(`/api/tasks/${selectedTask._id}`, taskData);
-        toast.success("Task updated successfully");
-        setTasks((prev) =>
-          prev.map((t) => (t._id === response.data.data._id ? response.data.data : t))
+        // Pass 'config' as the third argument
+        const response = await apiClient.put(
+          `/api/tasks/${selectedTask._id}`, 
+          taskData, 
+          config
         );
-        setSelectedTask(response.data.data);
+        
+        toast.success("Task updated successfully");
+        
+        // Update state with the returned data
+        const updatedTask = response.data.data;
+        setTasks((prev) =>
+          prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
+        );
+        setSelectedTask(updatedTask);
       }
+      
       setView("details");
       setIsMobileMenuOpen(false);
     } catch (err: any) {
